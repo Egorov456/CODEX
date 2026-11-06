@@ -5,7 +5,7 @@
   --ink: #2d2a32;
   --muted: #7b7482;
   --line: #f0e2dc;
-  --accent: #ff6f91;
+  --accent: #ef5f8b;
   --accent-ink: #ffffff;
   --accent-soft: #ffe1e9;
   --ok: #25b46b;
@@ -38,6 +38,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 
 .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.logo b { font-family: Unbounded, Montserrat, sans-serif; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: .03em; }
 .logo { color: inherit; text-decoration: none; font-size: 18px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .logo span { color: var(--muted); font-size: 13px; }
 
@@ -126,7 +127,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .breakdown div:last-child { border: 0; font-weight: 800; }
 .bar-actions { display: flex; gap: 8px; }
 
-.btn { border: 1.5px solid transparent; border-radius: 12px; padding: 12px 18px; cursor: pointer; font-weight: 700; text-decoration: none; text-align: center; display: inline-block; }
+.btn { border: 1.5px solid transparent; border-radius: 999px; padding: 12px 18px; cursor: pointer; font-weight: 700; text-decoration: none; text-align: center; display: inline-block; }
 .btn.sm { padding: 7px 12px; font-size: 13px; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); }
 .btn.primary:hover { filter: brightness(1.05); }

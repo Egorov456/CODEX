@@ -34,6 +34,10 @@ function fillTexts() {
   if (c.email) links.push(`<a href="mailto:${esc(c.email)}">${esc(c.email)}</a>`);
   $('#contacts').innerHTML = links.length ? `Или напишите напрямую: ${links.join(' · ')}` : '';
   $('#footContacts').innerHTML = links.join('');
+  $('#navSocial').innerHTML = [
+    c.telegram && `<a href="${esc(tgLink())}" target="_blank" rel="noopener" aria-label="Telegram" data-goal="messenger_click">TG</a>`,
+    c.whatsapp && `<a href="${esc(waLink('Здравствуйте! Хочу адресник для питомца 🐾'))}" target="_blank" rel="noopener" aria-label="WhatsApp" data-goal="messenger_click">WA</a>`,
+  ].filter(Boolean).join('');
   $('#floatMsg').innerHTML = [
     c.whatsapp && `<a href="${esc(waLink('Здравствуйте! Хочу адресник для питомца 🐾'))}" target="_blank" rel="noopener" style="background:#25d366" aria-label="Написать в WhatsApp" data-goal="messenger_click">WA</a>`,
     c.telegram && `<a href="${esc(tgLink())}" target="_blank" rel="noopener" style="background:#2aabee" aria-label="Написать в Telegram" data-goal="messenger_click">TG</a>`,
@@ -78,10 +82,15 @@ function fillIdeas() {
     const shape = CONFIG.shapes.find((s) => s.id === p.st.shape)?.name || '';
     const mat = CONFIG.materials.find((m) => m.id === p.st.material)?.name || '';
     return `<a class="idea" href="constructor.html#preset-${esc(p.id)}" data-preset="${esc(p.id)}">
-      <div class="idea-img" data-thumb="${esc(p.id)}">${shapeSvg(p.st.shape)}</div>
-      <div class="idea-body"><b>${esc(p.title)}</b><span>${esc(shape)} · ${esc(mat)} · «${esc(p.st.front.line1)}»</span>
-      <div class="idea-foot"><strong>${money(calcPrice(p.st).total)}</strong><em>Изменить под себя →</em></div></div></a>`;
+      <div class="idea-img"><span class="heart" aria-hidden="true">♡</span><div data-thumb="${esc(p.id)}" style="display:contents">${shapeSvg(p.st.shape)}</div></div>
+      <div class="idea-body"><b>${esc(p.title)}</b><span>${money(calcPrice(p.st).total)} · ${esc(shape)}, ${esc(mat.toLowerCase())}</span>
+      <span class="go">Изменить под себя →</span></div></a>`;
   }).join('');
+  // силуэты в «полароидах» и категориях, пока не готовы 3D-превью
+  $$('.polaroid [data-thumb], .cat [data-thumb]').forEach((el) => {
+    const p = presets.find((x) => x.id === el.dataset.thumb);
+    if (p) el.innerHTML = shapeSvg(p.st.shape);
+  });
   $$('[data-preset]').forEach((a) => a.addEventListener('click', () => {
     try { localStorage.setItem('pettag-preset', a.dataset.preset); } catch { /* ignore */ }
     goal('open_constructor', { preset: a.dataset.preset });
@@ -194,12 +203,21 @@ async function init3d() {
     for (const p of presets) {
       await new Promise((r) => setTimeout(r, 30));
       const url = off.render(p.st);
-      const box = $(`[data-thumb="${p.id}"]`);
-      if (box) box.innerHTML = `<img src="${url}" alt="${esc(p.title)}" />`;
+      $$(`[data-thumb="${p.id}"]`).forEach((box) => (box.innerHTML = `<img src="${url}" alt="${esc(p.title)}" />`));
     }
     off.dispose();
   }, { rootMargin: '400px' });
   io.observe(grid);
+}
+
+// ---------- Огромное название: подгоняем под ширину ----------
+function fitMarks() {
+  for (const el of $$('.hero-mark, .foot-mark')) {
+    const box = el.parentElement.clientWidth - 40;
+    el.style.fontSize = '100px';
+    const w = (el.querySelector('[data-brand]') || el).scrollWidth || 1;
+    el.style.fontSize = `${Math.min(220, Math.floor((100 * box) / w))}px`;
+  }
 }
 
 // ---------- Запуск ----------
@@ -213,4 +231,7 @@ document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-goal]');
   if (g) goal(g.dataset.goal);
 });
+fitMarks();
+document.fonts?.ready.then(fitMarks);
+addEventListener('resize', fitMarks);
 init3d();
