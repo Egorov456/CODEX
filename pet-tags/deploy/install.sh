@@ -124,7 +124,7 @@ $v6
         proxy_pass http://127.0.0.1:$API_PORT;
     }
     location ~ /\. { deny all; }
-    location ~* \.(js|css)$ { expires 1h; }
+    location ~* \.(js|css|html)$ { add_header Cache-Control "no-cache" always; add_header X-Content-Type-Options nosniff always; }
     location / { try_files \$uri \$uri/ =404; }
 }
 EOF

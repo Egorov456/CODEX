@@ -11,17 +11,7 @@
   --ok: #25b46b;
   --radius: 16px;
   --bar-h: 76px;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --bg: #1b1820; --bg2: #2a2230; --card: #24202a; --ink: #f3eef6; --muted: #a9a0b2; --line: #39323f;
-    --accent: #ff7b9c; --accent-soft: #46303a; color-scheme: dark;
-  }
-}
-:root[data-theme='dark'] {
-  --bg: #1b1820; --bg2: #2a2230; --card: #24202a; --ink: #f3eef6; --muted: #a9a0b2; --line: #39323f;
-  --accent: #ff7b9c; --accent-soft: #46303a; color-scheme: dark;
+  color-scheme: light only;
 }
 
 * { box-sizing: border-box; }
@@ -50,7 +40,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   background: radial-gradient(120% 90% at 50% 30%, #ffffff 0%, var(--bg2) 70%);
   border: 1px solid var(--line);
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .viewer { background: radial-gradient(120% 90% at 50% 30%, #3a3142 0%, #1f1a24 75%); } }
 #c { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 #c:active { cursor: grabbing; }
 .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); pointer-events: none; }

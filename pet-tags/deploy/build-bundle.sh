@@ -6,6 +6,9 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/site" "$ROOT/dist"
 cp -a "$ROOT"/index.html "$ROOT"/constructor.html "$ROOT"/privacy.html "$ROOT"/robots.txt "$ROOT"/css "$ROOT"/js "$TMP/site/"
 cp "$ROOT/deploy/install.sh" "$ROOT/deploy/order_server.py" "$TMP/"
+V="$(date +%s)"   # метка версии: браузеры не возьмут старые файлы из кэша
+sed -i -E "s#(href=\"css/[a-z]+\.css)\"#\1?v=$V\"#g; s#(src=\"js/[a-z]+\.js)\"#\1?v=$V\"#g" "$TMP"/site/*.html
+sed -i -E "s#(from '\./[a-z]+\.js)'#\1?v=$V'#g; s#import\('\./scene\.js'\)#import('./scene.js?v=$V')#g" "$TMP"/site/js/*.js
 OUT="$ROOT/dist/pettags-install.sh"
 cat > "$OUT" <<'HDR'
 #!/usr/bin/env bash

@@ -10,16 +10,6 @@
   --display: Unbounded, 'Arial Black', system-ui, sans-serif;
   --page: #ffffff;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --pink-soft: #4a2533; --pink-pale: #2c1d24; --page: #1b1820;
-    --tile-1: #23352a; --tile-2: #3a2a22; --tile-3: #1f2f3e; --tile-4: #3a3420; --tile-5: #2f2640; --tile-6: #3d2430;
-  }
-}
-:root[data-theme='dark'] {
-  --pink-soft: #4a2533; --pink-pale: #2c1d24; --page: #1b1820;
-  --tile-1: #23352a; --tile-2: #3a2a22; --tile-3: #1f2f3e; --tile-4: #3a3420; --tile-5: #2f2640; --tile-6: #3d2430;
-}
 
 body.landing { padding-bottom: 0; background: var(--page); --accent: var(--pink); }
 .landing h1, .landing h2, .landing h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
