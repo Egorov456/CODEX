@@ -76,7 +76,7 @@ export const CONFIG = {
   ],
   topperColors: ['#d9b38c', '#c8956a', '#f2c48d', '#ffffff', '#f28bb0', '#2d2d3a', '#d3d6db'],
 
-  tagColors: ['#f28bb0', '#d62839', '#c58b5a', '#f4f1ea', '#8fb8e8', '#9a6fb0', '#ff6b6b', '#ffb347', '#ffe066', '#7ed6a5', '#5ec8e5', '#6c8cff', '#b48cff', '#ffffff', '#2d2d3a'],
+  tagColors: ['#7a7d4a', '#c4683f', '#3d3f45', '#d8c3a5', '#f28bb0', '#d62839', '#c58b5a', '#f4f1ea', '#8fb8e8', '#9a6fb0', '#ff6b6b', '#ffb347', '#ffe066', '#7ed6a5', '#5ec8e5', '#6c8cff', '#b48cff', '#ffffff', '#2d2d3a'],
   rimColors: [
     { id: 'silver', name: 'Серебро', color: '#d3d6db' },
     { id: 'gold', name: 'Золото', color: '#e6b84f' },
@@ -115,7 +115,7 @@ export const CONFIG = {
     { id: 'chain', name: 'Цепочка', price: 300 },
     { id: 'collar', name: 'Ошейник-бусы', price: 450, radius: 0.11 },
   ],
-  cordColors: ['#d62839', '#8a9a2b', '#6b4226', '#d8c3a5', '#e94e77', '#ff8c42', '#ffd23f', '#3bb273', '#2e86de', '#6c5ce7', '#8d6e63', '#1e1e24', '#f5f5f5'],
+  cordColors: ['#7a7d4a', '#c4683f', '#3d3f45', '#d62839', '#8a9a2b', '#6b4226', '#d8c3a5', '#e94e77', '#ff8c42', '#ffd23f', '#3bb273', '#2e86de', '#6c5ce7', '#8d6e63', '#1e1e24', '#f5f5f5'],
   chainColors: [
     { id: 'silver', name: 'Серебро', color: '#d3d6db' },
     { id: 'gold', name: 'Золото', color: '#e6b84f' },
@@ -130,6 +130,7 @@ export const CONFIG = {
     { id: 'metal', name: 'Металлик', price: 50, group: 'bead' },
     { id: 'heart', name: 'Сердечко', price: 80, group: 'bead' },
     { id: 'star', name: 'Звёздочка', price: 80, group: 'bead' },
+    { id: 'silicone', name: 'Силиконовая матовая', price: 50, group: 'bead', color: '#c4683f' },
     { id: 'daisy', name: 'Цветочек', price: 70, group: 'bead', color: '#ffd23f' },
     { id: 'tennis', name: 'Мячик', price: 80, group: 'bead', color: '#cde34a' },
     { id: 'letter', name: 'Буква-кубик', price: 60, group: 'bead', letter: true, color: '#ffffff' },
@@ -141,7 +142,7 @@ export const CONFIG = {
     { id: 'ch-bow', name: 'Бантик', price: 150, group: 'charm', color: '#d3d6db' },
     { id: 'ch-duck', name: 'Уточка', price: 180, group: 'charm', color: '#ffd23f' },
   ],
-  beadColors: ['#d62839', '#c8956a', '#f4ecd8', '#cde34a', '#6b4226', '#ff4f81', '#ff9f43', '#feca57', '#1dd1a1', '#48dbfb', '#2e86de', '#a29bfe', '#ffffff', '#222f3e', '#f8c8dc'],
+  beadColors: ['#7a7d4a', '#c4683f', '#3d3f45', '#d8c3a5', '#d62839', '#c8956a', '#f4ecd8', '#cde34a', '#6b4226', '#ff4f81', '#ff9f43', '#feca57', '#1dd1a1', '#48dbfb', '#2e86de', '#a29bfe', '#ffffff', '#222f3e', '#f8c8dc'],
 
   // ---------- Стразы ----------
   pricePerStrass: 20,
@@ -155,6 +156,16 @@ export const CONFIG = {
   // ---------- Готовые идеи на главной (открываются в конструкторе для правки) ----------
   // Поля как в конструкторе; не указанное берётся по умолчанию.
   presets: [
+    { id: 'family', title: 'Фэмили-лук: ошейник + браслет', badge: 'Парные', state: {
+      shape: 'bone', material: 'enamel', tagColor: '#d8c3a5', rim: 'gold', front: { line1: 'Моника', font: 'Montserrat', textColor: 'black', icon: 'none' },
+      cord: 'collar', cordColor: '#7a7d4a', beadLayout: 'sym', extras: ['bracelet'],
+      beads: [['silicone', '#c4683f'], ['silicone', '#c4683f'], ['round', '#d8c3a5'], ['round', '#d8c3a5'], ['metal', '#e6b84f'], ['metal', '#e6b84f'],
+        ['silicone', '#7a7d4a'], ['silicone', '#7a7d4a'], ['round', '#d8c3a5'], ['round', '#d8c3a5']].map(([type, color]) => ({ type, color })) } },
+    { id: 'oldmoney', title: 'Old Money', badge: 'Новинка', state: {
+      shape: 'tag', material: 'steel', front: { line1: 'Вита', font: 'Montserrat', icon: 'none' },
+      cord: 'collar', cordColor: '#3d3f45', beadLayout: 'sym',
+      beads: [['silicone', '#d8c3a5'], ['silicone', '#d8c3a5'], ['silicone', '#c4683f'], ['silicone', '#c4683f'], ['metal', '#d3d6db'], ['metal', '#d3d6db'],
+        ['silicone', '#3d3f45'], ['silicone', '#3d3f45']].map(([type, color]) => ({ type, color })) } },
     { id: 'strawberry', title: 'Клубничный ошейник', badge: 'Хит', state: {
       shape: 'bone', material: 'enamel', tagColor: '#d62839', rim: 'gold', front: { line1: 'Финик', font: 'Montserrat', textColor: 'gold', icon: 'none' },
       cord: 'collar', cordColor: '#d62839', beadLayout: 'sym',
@@ -204,6 +215,9 @@ export const CONFIG = {
 
   // ---------- Дополнительно ----------
   extras: [
+    { id: 'bracelet', name: 'Парный браслет для хозяина', price: 690 },
+    { id: 'nfc', name: 'NFC-метка: контакты касанием телефона', price: 290 },
+    { id: 'steel', name: 'Стальной тросик внутри шнура', price: 250 },
     { id: 'box', name: 'Подарочная коробочка', price: 150 },
     { id: 'urgent', name: 'Срочно — за 1–2 дня', price: 300 },
   ],

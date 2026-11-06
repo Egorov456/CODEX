@@ -285,12 +285,16 @@ function buildPanel() {
     return [e, b];
   });
   refreshers.push(() => exBtns.forEach(([e, b]) => b.setAttribute('aria-pressed', String(st.extras.includes(e.id)))));
+  const wristInp = h('input', { class: 'input', inputmode: 'decimal', maxlength: 5, placeholder: 'Например, 16', value: st.wrist || '',
+    oninput: (e) => set((x) => (x.wrist = e.target.value.replace(/[^\d.,]/g, ''))) });
+  const wristBox = field('Обхват запястья хозяина, см*', wristInp);
+  refreshers.push(() => (wristBox.hidden = !st.extras.includes('bracelet')));
   P.append(step(7, 'Стразы и дополнительно', () => [st.strass ? `стразы ${st.strass}` : '', ...st.extras.map((id) => byId(CONFIG.extras, id).name.split(' ')[0])].filter(Boolean).join(', ') || '—',
     field('Стразы по краю', chips(CONFIG.strassCounts.map((n) => ({ id: n, name: n ? `${n} шт.` : 'Без страз' })), () => st.strass,
       (c) => set((x) => (x.strass = c.id), c.id ? `Стразы ${c.id} шт.` : 'Без страз'),
       (c) => [c.name, h('small', {}, c.id ? money(c.id * CONFIG.pricePerStrass) : '')])),
     field('Цвет страз', chips(CONFIG.strassColors, () => st.strassColor, (c) => set((x) => (x.strassColor = c.id)), (c) => [c.name])),
-    field('Дополнительно', extras)));
+    field('Дополнительно', extras), wristBox));
 
   // 8. Пожелания
   const ta = h('textarea', { class: 'input', maxlength: 1000, placeholder: 'Пожелания мастеру: оттенок, расположение бусин, сроки…', oninput: (e) => set((x) => (x.comment = e.target.value)) });
@@ -336,6 +340,7 @@ function showSend(text, title, sub) {
 function openOrder() {
   if (!st.front.line1.trim()) { toast('Добавьте имя питомца — шаг 3'); return; }
   if (st.cord === 'collar' && !String(st.neck || '').trim()) { toast('Укажите обхват шеи — шаг 5'); return; }
+  if (st.extras.includes('bracelet') && !String(st.wrist || '').trim()) { toast('Укажите обхват запястья для браслета — шаг 7'); return; }
   $('#orderForm').hidden = false;
   $('#sent').hidden = true;
   dlg.showModal();

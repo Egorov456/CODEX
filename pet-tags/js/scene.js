@@ -328,11 +328,17 @@ export class TagScene {
     const cSig = [cord.id, st.cordColor, st.chainColor, ringTop.x.toFixed(3), ringTop.y.toFixed(3)].join('|');
     this.swap('cord', cSig, () => (this.curve ? this.buildCord(cord, st) : null), this.root);
 
+    // парный браслет для хозяина: тот же шнур и бусины, рядом с адресником
+    const braceletOn = st.extras.includes('bracelet');
+    const brSig = [braceletOn, st.cord, st.cordColor, sc, st.beads.filter((b) => !isCharm(b.type)).map((b) => b.type + b.color + (b.letter || '')).join(',')].join('|');
+    this.swap('bracelet', brSig, () => (braceletOn ? this.buildBracelet(st, sc) : null), this.root);
+
     const outline = def.shape.getPoints(60);
     this.tagHalfW = Math.max(...outline.map((q) => Math.abs(q.x - def.hole.x))) * sc;
     this.updateBeads(st);
 
     let top = ringTop.y, width = 3.6 * sc;
+    if (braceletOn) width = Math.max(width, (this.braceletX + 1.5) * 2);
     if (this.curve) {
       const pts = this.curve.getPoints(64);
       top = Math.max(...pts.map((p) => p.y)) + 0.2;
@@ -447,6 +453,38 @@ export class TagScene {
       [-0.62, 3.6, 0], [-1.0, 2.7, -0.05], [-0.88, 1.5, -0.08], [-0.38, 0.5, -0.05],
     ].map(([x, y, z]) => new THREE.Vector3(p0.x + x, p0.y + y, z));
     return new THREE.CatmullRomCurve3(pts, true, 'centripetal');
+  }
+
+  buildBracelet(st, sc) {
+    const R = 1.2;
+    this.braceletX = 1.9 * sc + 1.8;
+    const cx = this.braceletX, cy = -0.2;
+    const pts = [];
+    for (let i = 0; i < 40; i++) {
+      const a = (i / 40) * Math.PI * 2;
+      pts.push(new THREE.Vector3(cx + Math.cos(a) * R, cy + Math.sin(a) * R * 0.92, Math.sin(a) * 0.35));
+    }
+    const curve = new THREE.CatmullRomCurve3(pts, true, 'centripetal');
+    const color = ['wax', 'paracord', 'collar'].includes(st.cord) ? st.cordColor : '#d8c3a5';
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 120, 0.09, 12, true), new THREE.MeshPhysicalMaterial({ color, roughness: 0.85, sheen: 0.5 })));
+    // бусины по нижней дуге — те же, что на шнурке
+    let beads = st.beads.filter((b) => !isCharm(b.type)).slice(0, 9);
+    if (!beads.length) beads = [{ type: 'pearl', color: '#ffffff' }, { type: 'pearl', color: '#ffffff' }, { type: 'pearl', color: '#ffffff' }];
+    beads.forEach((b, i) => {
+      const a = -Math.PI / 2 + (i - (beads.length - 1) / 2) * 0.36;
+      const o = this.buildBead(b);
+      o.scale.multiplyScalar(0.85);
+      o.position.set(cx + Math.cos(a) * R, cy + Math.sin(a) * R * 0.92, Math.sin(a) * 0.35);
+      o.rotation.z = a + Math.PI / 2;
+      g.add(o);
+    });
+    // узел-застёжка сверху
+    const knot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.36, 18), g.children[0].material);
+    knot.position.set(cx, cy + R * 0.92, 0.35);
+    knot.rotation.z = Math.PI / 2;
+    g.add(knot);
+    return g;
   }
 
   // Ошейник-бусы: большое кольцо из паракорда, адресник висит снизу
@@ -579,6 +617,11 @@ export class TagScene {
           new THREE.IcosahedronGeometry(0.21, 1),
           new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.02, transmission: 0.75, thickness: 0.35, ior: 1.6, flatShading: true, envMapIntensity: 1.6 })
         );
+      case 'silicone': {
+        const g = new THREE.SphereGeometry(0.2, 32, 24);
+        g.scale(1, 1, 0.82);
+        return new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.78, sheen: 0.6, sheenColor: '#ffffff' }));
+      }
       case 'pearl':
         return new THREE.Mesh(
           new THREE.SphereGeometry(0.19, 32, 24),
@@ -639,6 +682,7 @@ export class TagScene {
     p.strass?.obj?.children.forEach((m, i) => seq.push([m, i === 0 ? 450 : 70]));
     if (p.topper?.obj) seq.push([p.topper.obj, 400]);
     if (p.ring?.obj) seq.push([p.ring.obj, 500]);
+    if (p.bracelet?.obj) seq.push([p.bracelet.obj, 400]);
     if (p.cord?.obj) seq.push([p.cord.obj, 450]);
     [...this.beads.values()].forEach((v, i) => seq.push([v.obj, i === 0 ? 550 : 230]));
     let t = 150;

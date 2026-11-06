@@ -238,3 +238,16 @@ html { scroll-behavior: smooth; }
 @media (max-width: 960px) { .ideas { grid-template-columns: repeat(2, 1fr); } .parts { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 520px) { .parts { grid-template-columns: repeat(3, 1fr); } .marquee span { font-size: 12px; } }
 body.landing main { overflow-x: clip; }
+
+/* история бренда */
+.story { margin-top: 70px; }
+.story-in { position: relative; display: grid; grid-template-columns: 200px 1fr 200px; gap: 28px; align-items: center; }
+.polaroid figcaption { font-family: Caveat, cursive; font-size: 22px; text-align: center; margin-top: 4px; color: var(--ink); }
+.polaroid { padding-bottom: 10px; }
+.polaroid .ph { aspect-ratio: 1; background: var(--tile-4); display: grid; place-items: center; align-content: center; gap: 6px; font-size: 34px; color: var(--pink); }
+.polaroid .ph span { font-size: 12px; color: var(--muted); font-family: Montserrat, sans-serif; }
+.story .p2 .ph { background: var(--tile-1); }
+@media (max-width: 760px) {
+  .story-in { grid-template-columns: 1fr 1fr; }
+  .story-in .about-text { grid-column: 1 / -1; grid-row: 1; }
+}
