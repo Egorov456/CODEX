@@ -4,10 +4,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { CONFIG } from './config.js';
 import { buildShape, smallHeart, smallStar } from './shapes.js';
+import { buildExtraBead, buildTopper, isCharm, patternMaps } from './charms.js';
 
 const byId = (list, id) => list.find((x) => x.id === id) || list[0];
 const DEPTH = 0.18, BEVEL = 0.06;
 const FRONT_Z = DEPTH / 2 + BEVEL;
+const BEAD_COLLAR = 1.45;
 
 // ---------- Утилиты ----------
 const easeOutBack = (t) => 1 + 2.4 * Math.pow(t - 1, 3) + 1.4 * Math.pow(t - 1, 2);
@@ -277,7 +279,7 @@ export class TagScene {
     this.def = def;
     this.tagGroup.scale.setScalar(sc);
 
-    const tagSig = [st.shape, mat.id, st.tagColor, st.rim].join('|');
+    const tagSig = [st.shape, mat.id, st.tagColor, st.rim, mat.kind === 'metal' ? 'none' : st.pattern || 'none'].join('|');
     const shapeChanged = this.parts.tag && this.parts.tag.sig.split('|')[0] !== st.shape;
     this.swap('tag', tagSig, () => this.buildTag(def, mat, st), this.tagGroup);
     if (shapeChanged) this.animate(this.parts.tag.obj, 'pop', { dur: 600 });
@@ -296,6 +298,17 @@ export class TagScene {
     const bSig = [st.shape, st.back.line1, st.back.line2, st.front.font, color, engrave].join('|');
     this.swap('back', bSig, () => this.buildText([st.back.line1, st.back.line2], null, bArea, { ...style, font: 'Montserrat' }, false), this.tagGroup);
 
+    // фигурка поверх адресника (мордочка, бантик)
+    const topper = st.topper && st.topper !== 'none' ? st.topper : null;
+    this.swap('topper', [st.shape, topper, st.topperColor].join('|'), () => {
+      const t = topper && buildTopper(topper, st.topperColor);
+      if (t) {
+        t.scale.setScalar(1.35);
+        t.position.set(def.hole.x, def.hole.y + 0.08, FRONT_Z + 0.2);
+      }
+      return t;
+    }, this.tagGroup);
+
     const sSig = [st.shape, st.strass, st.strassColor, !!(st.front.line1 || st.front.icon !== 'none')].join('|');
     if (this.swap('strass', sSig, () => this.buildStrass(def, st), this.tagGroup, { quiet: true }) && this.parts.strass.obj) {
       this.parts.strass.obj.children.forEach((m, i) => this.animate(m, 'pop', { delay: i * 45, dur: 420 }));
@@ -310,16 +323,25 @@ export class TagScene {
     this.swap('ring', ringSig, () => this.buildRing(hx, ringCy, ringR, st, mat), this.root);
 
     const cord = byId(CONFIG.cords, st.cord);
-    this.curve = cord.id === 'none' ? null : this.cordCurve(ringTop);
+    this.curve = cord.id === 'none' ? null : cord.id === 'collar' ? this.collarCurve(ringTop) : this.cordCurve(ringTop);
+    this.isCollar = cord.id === 'collar';
     const cSig = [cord.id, st.cordColor, st.chainColor, ringTop.x.toFixed(3), ringTop.y.toFixed(3)].join('|');
     this.swap('cord', cSig, () => (this.curve ? this.buildCord(cord, st) : null), this.root);
 
+    const outline = def.shape.getPoints(60);
+    this.tagHalfW = Math.max(...outline.map((q) => Math.abs(q.x - def.hole.x))) * sc;
     this.updateBeads(st);
 
-    const top = this.curve ? ringTop.y + 3.9 : ringTop.y;
-    const bottom = -1.7 * sc - 0.7; // запас под кнопки поверх сцены
+    let top = ringTop.y, width = 3.6 * sc;
+    if (this.curve) {
+      const pts = this.curve.getPoints(64);
+      top = Math.max(...pts.map((p) => p.y)) + 0.2;
+      width = Math.max(width, Math.max(...pts.map((p) => p.x)) - Math.min(...pts.map((p) => p.x)) + 0.6);
+    }
+    const bottom = -1.7 * sc - (this.beadsHang ? 1.1 : 0.7); // запас под кнопки поверх сцены
     this.targetY = (top + bottom) / 2;
-    const dist = Math.max(7.5, (top - bottom) * 1.75 + 1.5);
+    const span = Math.max(top - bottom, (width / Math.max(this.camera.aspect, 0.55)) * 0.95);
+    const dist = Math.max(7.5, span * 1.75 + 1.5) * (this.opts.interactive === false ? 1.12 : 1);
     if (Math.abs(dist - this.targetDist) > 0.5) this._userZoomed = false;
     this.targetDist = dist;
   }
@@ -333,9 +355,23 @@ export class TagScene {
     if (mat.kind === 'metal') {
       const m = metal(mat.color);
       mats = [m, m];
+    }
+    const pat = mat.kind === 'metal' ? null : patternMaps(st.pattern, st.tagColor);
+    const withPattern = (opts) => (pat ? { ...opts, color: '#ffffff', map: pat.map, ...(pat.metalMap ? { metalness: 1, metalnessMap: pat.metalMap } : {}) } : { ...opts, color: st.tagColor });
+    if (mat.kind === 'metal') {
+      // уже задано выше
     } else if (mat.kind === 'enamel') {
-      const cap = new THREE.MeshPhysicalMaterial({ color: st.tagColor, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.06 });
+      const cap = new THREE.MeshPhysicalMaterial(withPattern({ roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.06 }));
       mats = [cap, metal(byId(CONFIG.rimColors, st.rim).color, 0.18)];
+    } else if (mat.kind === 'clay') {
+      const cap = new THREE.MeshPhysicalMaterial(withPattern({ roughness: 0.5, clearcoat: 0.35, clearcoatRoughness: 0.3, sheen: 0.4 }));
+      mats = [cap, new THREE.MeshPhysicalMaterial({ color: st.tagColor, roughness: 0.55, clearcoat: 0.3 })];
+    } else if (mat.kind === 'epoxy') {
+      const cap = new THREE.MeshPhysicalMaterial(withPattern({ roughness: 0.04, clearcoat: 1, clearcoatRoughness: 0.02, iridescence: 0.35, transmission: pat ? 0 : 0.25, thickness: 0.4 }));
+      mats = [cap, new THREE.MeshPhysicalMaterial({ color: st.tagColor, roughness: 0.05, clearcoat: 1, transmission: 0.2, thickness: 0.4 })];
+    } else if (pat) {
+      const m = new THREE.MeshPhysicalMaterial(withPattern({ roughness: 0.12, clearcoat: 0.6 }));
+      mats = [m, new THREE.MeshPhysicalMaterial({ color: st.tagColor, roughness: 0.12, transmission: 0.55, thickness: 0.4, ior: 1.45 })];
     } else {
       const m = new THREE.MeshPhysicalMaterial({
         color: st.tagColor, roughness: 0.12, transmission: 0.55, thickness: 0.4, ior: 1.45, clearcoat: 0.6,
@@ -413,6 +449,16 @@ export class TagScene {
     return new THREE.CatmullRomCurve3(pts, true, 'centripetal');
   }
 
+  // Ошейник-бусы: большое кольцо из паракорда, адресник висит снизу
+  collarCurve(p0) {
+    const R = 4.1, pts = [];
+    for (let i = 0; i < 48; i++) {
+      const a = -Math.PI / 2 + (i / 48) * Math.PI * 2;
+      pts.push(new THREE.Vector3(p0.x + Math.cos(a) * R * 0.95, p0.y + (Math.sin(a) + 1) * R, -(Math.sin(a) + 1) * R * 0.16));
+    }
+    return new THREE.CatmullRomCurve3(pts, true, 'centripetal');
+  }
+
   buildCord(cord, st) {
     if (cord.id === 'chain') {
       const len = this.curve.getLength();
@@ -434,7 +480,7 @@ export class TagScene {
     }
     const geo = new THREE.TubeGeometry(this.curve, 360, cord.radius, 14, true);
     const matOpts = { color: st.cordColor, roughness: cord.id === 'wax' ? 0.45 : 0.85, sheen: 0.5 };
-    if (cord.id === 'paracord') {
+    if (cord.id === 'paracord' || cord.id === 'collar') {
       const cv = document.createElement('canvas');
       cv.width = 64; cv.height = 64;
       const ctx = cv.getContext('2d');
@@ -447,38 +493,70 @@ export class TagScene {
       tex.repeat.set(Math.round(this.curve.getLength() / 0.14), 2);
       matOpts.map = tex;
     }
-    return new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial(matOpts));
+    const tube = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial(matOpts));
+    if (cord.id !== 'collar') return tube;
+    // регулировочные узлы наверху ошейника
+    const g = new THREE.Group();
+    g.add(tube);
+    for (const u of [0.43, 0.57]) {
+      const knot = new THREE.Mesh(new THREE.CylinderGeometry(cord.radius * 2.3, cord.radius * 2.3, 0.42, 20), tube.material);
+      knot.position.copy(this.curve.getPointAt(u));
+      knot.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), this.curve.getTangentAt(u));
+      g.add(knot);
+    }
+    return g;
   }
 
   // ---------- Бусины ----------
   beadSlots(st) {
     if (!this.curve) return [];
     const len = this.curve.getLength();
-    const u0 = 0.36 / len, step = 0.42 / len;
+    const k = this.isCollar ? BEAD_COLLAR : 1; // на ошейнике бусины крупнее и отступают от адресника
+    // отступ от центра: на ошейнике — по ширине адресника, чтобы подвески не прятались за ним
+    const R = 3.9, halfW = Math.min(R * 0.95, (this.tagHalfW || 1.6) + 0.45);
+    const u0 = (this.isCollar ? R * Math.asin(halfW / R) + 0.25 : 0.36) / len, step = (0.42 * k) / len;
     const n = st.beads.length;
+    const half = Math.ceil(n / 2);
     return st.beads.map((b, i) => {
       let u;
-      if (st.beadLayout === 'row') u = 1 - (u0 + (n - 1 - i) * step);
+      if (st.beadLayout === 'row' && this.isCollar) {
+        // на ошейнике слово читается слева направо по нижней дуге, с местом под адресник
+        u = i < half ? -(u0 + (half - 1 - i) * step) : u0 + (i - half) * step;
+      } else if (st.beadLayout === 'row') u = 1 - (u0 + (n - 1 - i) * step);
       else u = i % 2 === 0 ? u0 + Math.floor(i / 2) * step : 1 - (u0 + Math.floor(i / 2) * step);
-      return this.curve.getPointAt(((u % 1) + 1) % 1);
+      u = ((u % 1) + 1) % 1;
+      const p = this.curve.getPointAt(u);
+      const t = this.curve.getTangentAt(u);
+      const rot = this.isCollar && !isCharm(b.type) ? Math.atan2(t.y, t.x) : 0;
+      return { p, rot: Math.abs(rot) > Math.PI / 2 ? rot - Math.sign(rot) * Math.PI : rot };
     });
   }
 
   updateBeads(st) {
     const slots = this.beadSlots(st);
+    this.beadsHang = st.beads.some((b) => isCharm(b.type));
     const keep = new Set();
     st.beads.forEach((b, i) => {
       if (!slots[i]) return;
       keep.add(b.id);
-      const sig = [b.type, b.color, b.letter].join('|');
+      const sig = [b.type, b.color, b.letter, !!this.isCollar].join('|');
       const cur = this.beads.get(b.id);
+      const { p: slot, rot } = slots[i];
       if (cur && cur.sig === sig) {
-        if (cur.obj.position.distanceTo(slots[i]) > 1e-3) this.animate(cur.obj, 'move', { from: cur.obj.position.clone(), to: slots[i].clone(), dur: 450 });
+        cur.obj.rotation.z = rot;
+        if (cur.obj.position.distanceTo(slot) > 1e-3) this.animate(cur.obj, 'move', { from: cur.obj.position.clone(), to: slot.clone(), dur: 450 });
         return;
       }
       if (cur) { this.root.remove(cur.obj); dispose(cur.obj); }
-      const obj = this.buildBead(b);
-      obj.position.copy(slots[i]);
+      let obj = this.buildBead(b);
+      if (this.isCollar) {
+        const w = new THREE.Group();
+        obj.scale.setScalar(BEAD_COLLAR);
+        w.add(obj);
+        obj = w;
+      }
+      obj.position.copy(slot);
+      obj.rotation.z = rot;
       this.root.add(obj);
       this.beads.set(b.id, { sig, obj });
       this.animate(obj, cur ? 'pulse' : 'pop', { dur: 520 });
@@ -491,6 +569,8 @@ export class TagScene {
   }
 
   buildBead(b) {
+    const extra = buildExtraBead(b);
+    if (extra) return extra;
     const c = b.color;
     const glossy = () => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.05 });
     switch (b.type) {
@@ -557,6 +637,7 @@ export class TagScene {
     if (p.front?.obj) seq.push([p.front.obj, 650]);
     if (p.back?.obj) seq.push([p.back.obj, 0]);
     p.strass?.obj?.children.forEach((m, i) => seq.push([m, i === 0 ? 450 : 70]));
+    if (p.topper?.obj) seq.push([p.topper.obj, 400]);
     if (p.ring?.obj) seq.push([p.ring.obj, 500]);
     if (p.cord?.obj) seq.push([p.cord.obj, 450]);
     [...this.beads.values()].forEach((v, i) => seq.push([v.obj, i === 0 ? 550 : 230]));
@@ -589,6 +670,26 @@ export class TagScene {
     this.settle();
     this.renderer.render(this.scene, this.camera);
     return this.canvas.toDataURL('image/png');
+  }
+
+  // Отдельная деталь крупным планом (для витрины бусин и подвесок)
+  renderItem(b) {
+    const hidden = this.root.children.filter((c) => c.visible);
+    hidden.forEach((c) => (c.visible = false));
+    const o = this.buildBead(b);
+    this.root.add(o);
+    this.root.rotation.y = -0.25;
+    const box = new THREE.Box3().setFromObject(o);
+    const c = box.getCenter(new THREE.Vector3());
+    const s = box.getSize(new THREE.Vector3()).length();
+    this.camera.position.set(c.x, c.y + s * 0.25, c.z + s * 2.2);
+    this.camera.lookAt(c);
+    this.renderer.render(this.scene, this.camera);
+    const url = this.canvas.toDataURL('image/png');
+    this.root.remove(o);
+    dispose(o);
+    hidden.forEach((h) => (h.visible = true));
+    return url;
   }
 
   dispose() {

@@ -162,11 +162,22 @@ function buildPanel() {
   // 2. Материал
   const colorBox = field('Цвет', swatches(CONFIG.tagColors, () => st.tagColor, (c) => set((x) => (x.tagColor = c))));
   const rimBox = field('Бортик', chips(CONFIG.rimColors, () => st.rim, (r) => set((x) => (x.rim = r.id)), (r) => [r.name]));
-  refreshers.push(() => { colorBox.hidden = mat().kind === 'metal'; rimBox.hidden = mat().kind !== 'enamel'; });
-  P.append(step(2, 'Материал и цвет', () => mat().name,
+  const patBox = field('Узор', chips(CONFIG.patterns, () => st.pattern || 'none', (pt) => set((x) => (x.pattern = pt.id), pt.name),
+    (pt) => [pt.name, h('small', {}, pt.price ? `+${money(pt.price)}` : '')]));
+  const topColor = field('Цвет фигурки', swatches(CONFIG.topperColors, () => st.topperColor, (c) => set((x) => (x.topperColor = c))));
+  refreshers.push(() => {
+    colorBox.hidden = mat().kind === 'metal';
+    rimBox.hidden = mat().kind !== 'enamel';
+    patBox.hidden = mat().kind === 'metal';
+    topColor.hidden = !st.topper || st.topper === 'none';
+  });
+  P.append(step(2, 'Материал, узор и фигурка', () => mat().name,
     field('Материал', chips(CONFIG.materials, () => st.material, (m) => set((x) => (x.material = m.id), m.name),
       (m) => [m.name, h('small', {}, m.price ? `+${money(m.price)}` : 'включено')])),
-    colorBox, rimBox));
+    colorBox, patBox, rimBox,
+    field('Фигурка на адреснике', chips(CONFIG.toppers, () => st.topper || 'none', (t) => set((x) => (x.topper = t.id), t.name),
+      (t) => [t.name, h('small', {}, t.price ? `+${money(t.price)}` : '')])),
+    topColor));
 
   // 3. Лицевая сторона
   const [n1, c1] = textInput(() => st.front.line1, (v) => set((x) => (x.front.line1 = v)), CONFIG.limits.frontLine, 'Кличка питомца', CONFIG.pricePerFrontChar);
@@ -196,34 +207,52 @@ function buildPanel() {
   const cord = () => byId(CONFIG.cords, st.cord);
   const cordColor = field('Цвет шнурка', swatches(CONFIG.cordColors, () => st.cordColor, (c) => set((x) => (x.cordColor = c))));
   const chainColor = field('Цвет цепочки', chips(CONFIG.chainColors, () => st.chainColor, (c) => set((x) => (x.chainColor = c.id)), (c) => [c.name]));
-  refreshers.push(() => { cordColor.hidden = !['wax', 'paracord'].includes(st.cord); chainColor.hidden = st.cord !== 'chain'; });
-  P.append(step(5, 'Шнурок', () => cord().name,
+  const neckInp = h('input', { class: 'input', inputmode: 'decimal', maxlength: 5, placeholder: 'Например, 24', value: st.neck || '',
+    oninput: (e) => set((x) => (x.neck = e.target.value.replace(/[^\d.,]/g, ''))) });
+  const neckBox = field('Обхват шеи питомца, см*', neckInp);
+  const neckNote = h('p', { class: 'note' }, 'Измерьте шею мягким сантиметром и добавьте 2 пальца. Узлы на ошейнике регулируют длину.');
+  refreshers.push(() => {
+    cordColor.hidden = !['wax', 'paracord', 'collar'].includes(st.cord);
+    chainColor.hidden = st.cord !== 'chain';
+    neckBox.hidden = neckNote.hidden = st.cord !== 'collar';
+  });
+  P.append(step(5, 'Шнурок или ошейник', () => cord().name,
     field('Крепление', chips(CONFIG.cords, () => st.cord, (c) => set((x) => (x.cord = c.id), c.name),
       (c) => [c.name, h('small', {}, c.price ? money(c.price) : 'включено')])),
-    cordColor, chainColor));
+    cordColor, chainColor, neckBox, neckNote));
 
   // 6. Бусины
   const pick = { type: 'round', color: CONFIG.beadColors[0] };
   const pickRef = () => pick;
-  const typeChips = chips(CONFIG.beads, () => pick.type, (b) => { pick.type = b.id; refresh(); }, (b) => [b.name, h('small', {}, money(b.price))]);
+  // у каждой детали свой цвет по умолчанию; количество сбрасывается, чтобы «× 4» не перенеслось на другую деталь
+  const pickType = (b) => { pick.type = b.id; if (b.color) pick.color = b.color; count.n = 1; refresh(); };
+  const typeChips = chips(CONFIG.beads.filter((b) => b.group !== 'charm'), () => pick.type, pickType, (b) => [b.name, h('small', {}, money(b.price))]);
+  const charmChips = chips(CONFIG.beads.filter((b) => b.group === 'charm'), () => pick.type, pickType, (b) => [b.name, h('small', {}, money(b.price))]);
+  const count = { n: 1 };
+  const countChips = chips([1, 2, 4, 6].map((n) => ({ id: n, name: `× ${n}` })), () => count.n, (c) => { count.n = c.id; refresh(); }, (c) => [c.name]);
+  const isLetter = () => !!byId(CONFIG.beads, pick.type).letter;
   const colorChips = swatches(CONFIG.beadColors, () => pick.color, (c) => { pick.color = c; refresh(); });
   const letterInp = h('input', { class: 'input', maxlength: CONFIG.limits.beads, placeholder: 'Слово из букв-бусин, напр. БУБЛИК' });
   const letterBox = field('Буквы', letterInp);
   const full = () => st.beads.length >= CONFIG.limits.beads;
   const addBtn = h('button', { type: 'button', class: 'btn primary', onclick: () => {
     const t = byId(CONFIG.beads, pick.type);
-    if (pick.type === 'letter') {
+    if (isLetter()) {
       const letters = [...letterInp.value.replace(/\s/g, '')].slice(0, CONFIG.limits.beads - st.beads.length);
       if (!letters.length) { letterInp.focus(); toast('Введите буквы'); return; }
       set((x) => {
-        x.beads.push(...letters.map((l) => ({ id: uid(), type: 'letter', color: pick.color, letter: l })));
+        x.beads.push(...letters.map((l) => ({ id: uid(), type: pick.type, color: pick.color, letter: l })));
         x.beadLayout = 'row'; // слово читается подряд
       }, `Буквы «${letters.join('')}»`);
       letterInp.value = '';
-    } else set((x) => x.beads.push({ id: uid(), type: t.id, color: pick.color }), `Бусина «${t.name}»`);
+    } else {
+      const n = Math.min(count.n, CONFIG.limits.beads - st.beads.length);
+      set((x) => x.beads.push(...Array.from({ length: n }, () => ({ id: uid(), type: t.id, color: pick.color }))),
+        `${t.group === 'charm' ? 'Подвеска' : 'Бусина'} «${t.name}»${n > 1 ? ` × ${n}` : ''}`);
+    }
   } }, '+ Добавить');
   const list = h('div', { class: 'bead-list' });
-  const noCord = h('p', { class: 'note' }, 'Бусины надеваются на шнурок или цепочку — выберите их в шаге 5.');
+  const noCord = h('p', { class: 'note' }, 'Бусины и подвески надеваются на шнурок, цепочку или ошейник — выберите в шаге 5.');
   const layout = chips([{ id: 'sym', name: 'Симметрично' }, { id: 'row', name: 'В ряд' }], () => st.beadLayout || 'sym',
     (l) => set((x) => (x.beadLayout = l.id)), (l) => [l.name]);
   const clearBtn = h('button', { type: 'button', class: 'btn ghost sm', onclick: () => set((x) => (x.beads = []), 'Бусины убраны') }, 'Убрать все');
@@ -231,16 +260,19 @@ function buildPanel() {
     const off = st.cord === 'none';
     noCord.hidden = !off;
     addBtn.disabled = off || full();
-    addBtn.textContent = full() ? `Максимум ${CONFIG.limits.beads}` : pickRef().type === 'letter' ? '+ Добавить буквы' : '+ Добавить бусину';
-    letterBox.hidden = pick.type !== 'letter';
+    const grp = byId(CONFIG.beads, pickRef().type).group;
+    addBtn.textContent = full() ? `Максимум ${CONFIG.limits.beads}` : isLetter() ? '+ Добавить буквы' : grp === 'charm' ? '+ Добавить подвеску' : '+ Добавить бусину';
+    letterBox.hidden = !isLetter();
+    countBox.hidden = isLetter();
     clearBtn.hidden = !st.beads.length;
     list.replaceChildren(...st.beads.map((b, i) => h('span', { class: 'bead-item' },
-      h('i', { style: `background:${b.color};color:${b.type === 'letter' ? '#0008' : 'transparent'}` }, b.letter || '•'),
+      h('i', { style: `background:${b.color};color:${b.letter ? '#0008' : 'transparent'}` }, b.letter || '•'),
       `${i + 1}. ${byId(CONFIG.beads, b.type).name}`,
       h('button', { type: 'button', 'aria-label': 'Убрать', onclick: () => set((x) => (x.beads = x.beads.filter((y) => y.id !== b.id)), 'Бусина убрана') }, '×'))));
   });
-  P.append(step(6, 'Бусины', () => (st.beads.length ? `${st.beads.length} шт.` : 'нет'),
-    noCord, field('Вид', typeChips), field('Цвет', colorChips), letterBox,
+  const countBox = field('Сколько добавить', countChips);
+  P.append(step(6, 'Бусины и подвески', () => (st.beads.length ? `${st.beads.length} шт.` : 'нет'),
+    noCord, field('Бусины', typeChips), field('Подвески-фигурки', charmChips), field('Цвет', colorChips), letterBox, countBox,
     h('div', { class: 'row' }, addBtn, clearBtn), list, field('Расположение', layout)));
 
   // 7. Стразы и дополнительно
@@ -303,6 +335,7 @@ function showSend(text, title, sub) {
 
 function openOrder() {
   if (!st.front.line1.trim()) { toast('Добавьте имя питомца — шаг 3'); return; }
+  if (st.cord === 'collar' && !String(st.neck || '').trim()) { toast('Укажите обхват шеи — шаг 5'); return; }
   $('#orderForm').hidden = false;
   $('#sent').hidden = true;
   dlg.showModal();

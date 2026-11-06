@@ -209,3 +209,32 @@ html { scroll-behavior: smooth; }
 
 .hero-mark [data-brand] { display: inline-block; }
 @media (max-width: 760px) { .hero-note { display: none; } }
+
+/* ---------- оживление: бегущая лента, бейджи, детали ---------- */
+.marquee { background: var(--pink); color: #fff; overflow: hidden; transform: rotate(-2deg); margin: 10px -20px 0; padding-block: 12px; position: relative; z-index: 4;
+  box-shadow: 0 10px 30px rgba(239, 95, 139, .25); }
+.marquee-track { display: flex; width: max-content; animation: marquee 32s linear infinite; }
+.marquee span { font-family: var(--display); font-weight: 700; font-size: 15px; text-transform: uppercase; white-space: nowrap; letter-spacing: .03em; padding-right: 8px; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+.idea-img .badge { position: absolute; top: 10px; left: 10px; z-index: 1; background: var(--pink); color: #fff; font-size: 11px; font-weight: 800;
+  padding: 5px 10px; border-radius: 999px; transform: rotate(-6deg); }
+.idea:nth-child(3n+2) .badge { background: #2d2a32; }
+.idea:hover .idea-img img { animation: wiggle .6s ease; }
+@keyframes wiggle { 25% { transform: rotate(-4deg); } 60% { transform: rotate(3deg); } }
+.ideas { grid-template-columns: repeat(4, 1fr); }
+.parts-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; }
+.parts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+.part { text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: 4px; }
+.part-img { aspect-ratio: 1; border-radius: 50%; background: var(--pink-pale); display: grid; place-items: center; overflow: hidden; transition: transform .3s; }
+.part:nth-child(4n+2) .part-img { background: var(--tile-1); }
+.part:nth-child(4n+3) .part-img { background: var(--tile-3); }
+.part:nth-child(4n+4) .part-img { background: var(--tile-4); }
+.part:hover .part-img { transform: translateY(-4px) rotate(-5deg); }
+.part-img img { width: 100%; height: 100%; object-fit: contain; animation: fade .5s; }
+.part-img .dot { width: 34%; aspect-ratio: 1; border-radius: 50%; opacity: .6; }
+.part b { font-size: 13px; text-align: center; }
+.part span { font-size: 12px; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .marquee-track { animation: none; } }
+@media (max-width: 960px) { .ideas { grid-template-columns: repeat(2, 1fr); } .parts { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 520px) { .parts { grid-template-columns: repeat(3, 1fr); } .marquee span { font-size: 12px; } }
+body.landing main { overflow-x: clip; }

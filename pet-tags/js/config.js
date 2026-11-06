@@ -27,7 +27,7 @@ export const CONFIG = {
   delivery: 'Отправляем по всей России Почтой, СДЭК или Ozon — стоимость по тарифу службы доставки.',
   payment: 'После того как мастер подтвердит макет: переводом по СБП или на карту.',
 
-  limits: { frontLine: 12, frontLine2: 18, backLine: 18, beads: 12 },
+  limits: { frontLine: 12, frontLine2: 18, backLine: 18, beads: 24 },
 
   // ---------- Форма адресника: базовая цена ----------
   shapes: [
@@ -53,9 +53,30 @@ export const CONFIG = {
     { id: 'rose', name: 'Розовое золото', kind: 'metal', color: '#e7a98f', price: 250 },
     { id: 'enamel', name: 'Эмаль', kind: 'enamel', price: 200 },
     { id: 'acrylic', name: 'Акрил', kind: 'acrylic', price: 100 },
+    { id: 'clay', name: 'Полимерная глина', kind: 'clay', price: 150 },
+    { id: 'epoxy', name: 'Эпоксидная смола', kind: 'epoxy', price: 250 },
   ],
 
-  tagColors: ['#f28bb0', '#ff6b6b', '#ffb347', '#ffe066', '#7ed6a5', '#5ec8e5', '#6c8cff', '#b48cff', '#ffffff', '#2d2d3a'],
+  // Узор лицевой и обратной стороны (для всех материалов, кроме металла)
+  patterns: [
+    { id: 'none', name: 'Однотонный', price: 0 },
+    { id: 'stripes', name: 'Полоски', price: 100 },
+    { id: 'dots', name: 'Горошек', price: 100 },
+    { id: 'leopard', name: 'Леопард', price: 150 },
+    { id: 'marble', name: 'Мрамор', price: 150 },
+    { id: 'goldleaf', name: 'Поталь (золото)', price: 200 },
+  ],
+
+  // Объёмная фигурка поверх адресника
+  toppers: [
+    { id: 'none', name: 'Без фигурки', price: 0 },
+    { id: 'teddy', name: 'Мордочка пёсика', price: 250 },
+    { id: 'kitty', name: 'Мордочка котика', price: 250 },
+    { id: 'bow', name: 'Бантик', price: 150 },
+  ],
+  topperColors: ['#d9b38c', '#c8956a', '#f2c48d', '#ffffff', '#f28bb0', '#2d2d3a', '#d3d6db'],
+
+  tagColors: ['#f28bb0', '#d62839', '#c58b5a', '#f4f1ea', '#8fb8e8', '#9a6fb0', '#ff6b6b', '#ffb347', '#ffe066', '#7ed6a5', '#5ec8e5', '#6c8cff', '#b48cff', '#ffffff', '#2d2d3a'],
   rimColors: [
     { id: 'silver', name: 'Серебро', color: '#d3d6db' },
     { id: 'gold', name: 'Золото', color: '#e6b84f' },
@@ -92,24 +113,35 @@ export const CONFIG = {
     { id: 'wax', name: 'Вощёный шнур', price: 120, radius: 0.055 },
     { id: 'paracord', name: 'Паракорд', price: 180, radius: 0.085 },
     { id: 'chain', name: 'Цепочка', price: 300 },
+    { id: 'collar', name: 'Ошейник-бусы', price: 450, radius: 0.11 },
   ],
-  cordColors: ['#e94e77', '#ff8c42', '#ffd23f', '#3bb273', '#2e86de', '#6c5ce7', '#8d6e63', '#1e1e24', '#f5f5f5'],
+  cordColors: ['#d62839', '#8a9a2b', '#6b4226', '#d8c3a5', '#e94e77', '#ff8c42', '#ffd23f', '#3bb273', '#2e86de', '#6c5ce7', '#8d6e63', '#1e1e24', '#f5f5f5'],
   chainColors: [
     { id: 'silver', name: 'Серебро', color: '#d3d6db' },
     { id: 'gold', name: 'Золото', color: '#e6b84f' },
   ],
 
   // ---------- Бусины ----------
+  // group: bead — бусина на шнурке, charm — подвеска-фигурка; letter: true — с буквой/цифрой
   beads: [
-    { id: 'round', name: 'Круглая', price: 40 },
-    { id: 'facet', name: 'Гранёная', price: 60 },
-    { id: 'pearl', name: 'Жемчуг', price: 70 },
-    { id: 'metal', name: 'Металлик', price: 50 },
-    { id: 'heart', name: 'Сердечко', price: 80 },
-    { id: 'star', name: 'Звёздочка', price: 80 },
-    { id: 'letter', name: 'Буква', price: 60 },
+    { id: 'round', name: 'Круглая', price: 40, group: 'bead' },
+    { id: 'facet', name: 'Гранёная', price: 60, group: 'bead' },
+    { id: 'pearl', name: 'Жемчуг', price: 70, group: 'bead' },
+    { id: 'metal', name: 'Металлик', price: 50, group: 'bead' },
+    { id: 'heart', name: 'Сердечко', price: 80, group: 'bead' },
+    { id: 'star', name: 'Звёздочка', price: 80, group: 'bead' },
+    { id: 'daisy', name: 'Цветочек', price: 70, group: 'bead', color: '#ffd23f' },
+    { id: 'tennis', name: 'Мячик', price: 80, group: 'bead', color: '#cde34a' },
+    { id: 'letter', name: 'Буква-кубик', price: 60, group: 'bead', letter: true, color: '#ffffff' },
+    { id: 'disc', name: 'Буква-кругляш', price: 50, group: 'bead', letter: true, color: '#ffffff' },
+    { id: 'ch-strawberry', name: 'Клубничка', price: 180, group: 'charm', color: '#e0283a' },
+    { id: 'ch-croissant', name: 'Круассан', price: 200, group: 'charm' },
+    { id: 'ch-teddy', name: 'Пёсик', price: 250, group: 'charm', color: '#c8956a' },
+    { id: 'ch-kitty', name: 'Котик', price: 250, group: 'charm', color: '#f2c48d' },
+    { id: 'ch-bow', name: 'Бантик', price: 150, group: 'charm', color: '#d3d6db' },
+    { id: 'ch-duck', name: 'Уточка', price: 180, group: 'charm', color: '#ffd23f' },
   ],
-  beadColors: ['#ff4f81', '#ff9f43', '#feca57', '#1dd1a1', '#48dbfb', '#2e86de', '#a29bfe', '#ffffff', '#222f3e', '#f8c8dc'],
+  beadColors: ['#d62839', '#c8956a', '#f4ecd8', '#cde34a', '#6b4226', '#ff4f81', '#ff9f43', '#feca57', '#1dd1a1', '#48dbfb', '#2e86de', '#a29bfe', '#ffffff', '#222f3e', '#f8c8dc'],
 
   // ---------- Стразы ----------
   pricePerStrass: 20,
@@ -123,24 +155,40 @@ export const CONFIG = {
   // ---------- Готовые идеи на главной (открываются в конструкторе для правки) ----------
   // Поля как в конструкторе; не указанное берётся по умолчанию.
   presets: [
+    { id: 'strawberry', title: 'Клубничный ошейник', badge: 'Хит', state: {
+      shape: 'bone', material: 'enamel', tagColor: '#d62839', rim: 'gold', front: { line1: 'Финик', font: 'Montserrat', textColor: 'gold', icon: 'none' },
+      cord: 'collar', cordColor: '#d62839', beadLayout: 'sym',
+      beads: [['ch-strawberry', '#e0283a'], ['ch-strawberry', '#e0283a'], ['pearl', '#f8c8dc'], ['pearl', '#f8c8dc'], ['round', '#d62839'], ['round', '#d62839'],
+        ['facet', '#ff4f81'], ['facet', '#ff4f81'], ['pearl', '#ffffff'], ['pearl', '#ffffff'], ['round', '#d62839'], ['round', '#d62839']].map(([type, color]) => ({ type, color })) } },
+    { id: 'barista', title: 'Кофе с круассаном', badge: 'Новинка', state: {
+      shape: 'circle', material: 'clay', tagColor: '#f4ecd8', front: { line1: 'Барни', font: 'Comfortaa', textColor: 'black', icon: 'paw' },
+      cord: 'collar', cordColor: '#6b4226', beadLayout: 'sym',
+      beads: [['ch-teddy', '#c8956a'], ['ch-croissant', '#e0a458'], ['heart', '#c8956a'], ['heart', '#c8956a'], ['round', '#f4ecd8'], ['round', '#f4ecd8'],
+        ['facet', '#ffffff'], ['facet', '#ffffff'], ['round', '#f4ecd8'], ['round', '#f4ecd8']].map(([type, color]) => ({ type, color })) } },
+    { id: 'tennis', title: 'Теннис и леопард', state: {
+      shape: 'bone', material: 'enamel', tagColor: '#c58b5a', pattern: 'leopard', rim: 'gold', front: { line1: 'Луно', font: 'Montserrat', textColor: 'white', icon: 'none' },
+      cord: 'collar', cordColor: '#8a9a2b', beadLayout: 'sym',
+      beads: [['ch-bow', '#d3d6db'], ['tennis', '#cde34a'], ['round', '#6b4226'], ['round', '#6b4226'], ['tennis', '#cde34a'], ['facet', '#8a9a2b'],
+        ['facet', '#8a9a2b'], ['metal', '#d3d6db'], ['metal', '#d3d6db'], ['round', '#6b4226']].map(([type, color]) => ({ type, color })) } },
+    { id: 'nova', title: 'Имя из бусин', state: {
+      shape: 'heart', material: 'enamel', tagColor: '#f28bb0', rim: 'gold', front: { line1: 'Нова', font: 'Lobster', icon: 'none' },
+      cord: 'collar', cordColor: '#f8c8dc', beadLayout: 'row',
+      beads: [['pearl', '#f8c8dc'], ['round', '#ff4f81'], ...[...'НОВА'].map((l) => ['disc', '#ffffff', l]), ['round', '#ff4f81'], ['pearl', '#f8c8dc']]
+        .map(([type, color, letter]) => ({ type, color, letter })) } },
+    { id: 'stripes', title: 'Полоски с пёсиком', badge: 'Хит', state: {
+      shape: 'circle', material: 'clay', tagColor: '#8fb8e8', pattern: 'stripes', topper: 'teddy', topperColor: '#d9b38c',
+      front: { line1: 'Майло', font: 'Montserrat', textColor: 'gold', icon: 'none' }, cord: 'none' } },
+    { id: 'goldleaf', title: 'Поталь', state: {
+      shape: 'circle', material: 'epoxy', tagColor: '#f4f1ea', pattern: 'goldleaf', front: { line1: 'Барби', font: 'Lobster', textColor: 'gold', icon: 'none' },
+      cord: 'paracord', cordColor: '#8a9a2b' } },
     { id: 'princess', title: 'Для кошки-принцессы', state: {
       shape: 'heart', material: 'enamel', tagColor: '#f28bb0', rim: 'gold', strass: 6, strassColor: 'pink',
       front: { line1: 'Мурка', font: 'Lobster', icon: 'crown' }, cord: 'wax', cordColor: '#e94e77',
       beads: [{ type: 'pearl', color: '#ffffff' }, { type: 'heart', color: '#ff4f81' }, { type: 'pearl', color: '#ffffff' }] } },
-    { id: 'classic', title: 'Классика для собаки', state: {
-      shape: 'bone', material: 'gold', front: { line1: 'Рекс', font: 'Montserrat', icon: 'paw' }, cord: 'chain', chainColor: 'gold' } },
-    { id: 'name', title: 'Имя из бусин', state: {
-      shape: 'circle', material: 'steel', front: { line1: 'Бублик', font: 'Comfortaa', icon: 'paw' }, cord: 'wax', cordColor: '#1e1e24', beadLayout: 'row',
-      beads: [...'БУБЛИК'].map((l) => ({ type: 'letter', color: '#ffffff', letter: l })) } },
-    { id: 'fish', title: 'Рыбка для кота', state: {
-      shape: 'fish', material: 'enamel', tagColor: '#5ec8e5', rim: 'silver', front: { line1: 'Барсик', font: 'Comfortaa', icon: 'none' },
-      cord: 'paracord', cordColor: '#2e86de', beads: [{ type: 'facet', color: '#48dbfb' }, { type: 'metal', color: '#d3d6db' }] } },
-    { id: 'flower', title: 'Цветочек с бусинами', state: {
-      shape: 'flower', material: 'acrylic', tagColor: '#ffe066', front: { line1: 'Ася', font: 'Caveat', icon: 'heart' }, cord: 'wax', cordColor: '#3bb273',
-      beads: [{ type: 'round', color: '#ff9f43' }, { type: 'star', color: '#feca57' }, { type: 'round', color: '#ff9f43' }, { type: 'star', color: '#feca57' }] } },
-    { id: 'star', title: 'Звёздочка со стразами', state: {
-      shape: 'star', material: 'enamel', tagColor: '#6c8cff', rim: 'silver', strass: 10, strassColor: 'clear',
-      front: { line1: 'Луна', font: 'Lobster', icon: 'none' }, cord: 'chain', chainColor: 'silver', beads: [{ type: 'pearl', color: '#f8c8dc' }] } },
+    { id: 'kitty', title: 'Котик в горошек', state: {
+      shape: 'flower', material: 'clay', tagColor: '#9a6fb0', pattern: 'dots', topper: 'kitty', topperColor: '#f2c48d',
+      front: { line1: 'Ася', font: 'Caveat', textColor: 'white', icon: 'none' }, cord: 'wax', cordColor: '#f5f5f5',
+      beads: [{ type: 'daisy', color: '#ffd23f' }, { type: 'daisy', color: '#ffd23f' }, { type: 'pearl', color: '#ffffff' }, { type: 'pearl', color: '#ffffff' }] } },
   ],
 
   // ---------- Частые вопросы на главной ----------

@@ -82,7 +82,7 @@ function fillIdeas() {
     const shape = CONFIG.shapes.find((s) => s.id === p.st.shape)?.name || '';
     const mat = CONFIG.materials.find((m) => m.id === p.st.material)?.name || '';
     return `<a class="idea" href="constructor.html#preset-${esc(p.id)}" data-preset="${esc(p.id)}">
-      <div class="idea-img"><span class="heart" aria-hidden="true">♡</span><div data-thumb="${esc(p.id)}" style="display:contents">${shapeSvg(p.st.shape)}</div></div>
+      <div class="idea-img">${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ''}<span class="heart" aria-hidden="true">♡</span><div data-thumb="${esc(p.id)}" style="display:contents">${shapeSvg(p.st.shape)}</div></div>
       <div class="idea-body"><b>${esc(p.title)}</b><span>${money(calcPrice(p.st).total)} · ${esc(shape)}, ${esc(mat.toLowerCase())}</span>
       <span class="go">Изменить под себя →</span></div></a>`;
   }).join('');
@@ -95,6 +95,21 @@ function fillIdeas() {
     try { localStorage.setItem('pettag-preset', a.dataset.preset); } catch { /* ignore */ }
     goal('open_constructor', { preset: a.dataset.preset });
   }));
+}
+
+// ---------- Детали: бусины и подвески ----------
+const PARTS = [
+  ['ch-strawberry'], ['ch-croissant'], ['ch-teddy'], ['ch-kitty'], ['ch-bow'], ['ch-duck'],
+  ['tennis', '#cde34a'], ['daisy', '#ffd23f'], ['disc', '#ffffff', 'А'], ['letter', '#f8c8dc', 'Б'], ['facet', '#48dbfb'], ['pearl', '#f8c8dc'],
+].map(([type, color, letter]) => {
+  const t = CONFIG.beads.find((b) => b.id === type);
+  return { id: 'part-' + type, type, color: color || t.color || '#ff4f81', letter, name: t.name, price: t.price, charm: t.group === 'charm' };
+});
+
+function fillParts() {
+  $('#partsGrid').innerHTML = PARTS.map((p) => '<a class="part" href="constructor.html" data-goal="open_constructor">' +
+    '<div class="part-img" data-part="' + esc(p.id) + '"><span class="dot" style="background:' + esc(p.color) + '"></span></div>' +
+    '<b>' + esc(p.name) + '</b><span>' + (p.charm ? 'подвеска' : 'бусина') + ' · ' + money(p.price) + '</span></a>').join('');
 }
 
 // ---------- FAQ + разметка для поиска ----------
@@ -205,6 +220,11 @@ async function init3d() {
       const url = off.render(p.st);
       $$(`[data-thumb="${p.id}"]`).forEach((box) => (box.innerHTML = `<img src="${url}" alt="${esc(p.title)}" />`));
     }
+    for (const p of PARTS) {
+      await new Promise((r) => setTimeout(r, 20));
+      const box = $('[data-part="' + p.id + '"]');
+      if (box) box.innerHTML = '<img src="' + off.renderItem(p) + '" alt="' + esc(p.name) + '" />';
+    }
     off.dispose();
   }, { rootMargin: '400px' });
   io.observe(grid);
@@ -225,6 +245,7 @@ initAnalytics();
 fillTexts();
 fillPrices();
 fillIdeas();
+fillParts();
 fillFaq();
 initLead();
 document.addEventListener('click', (e) => {

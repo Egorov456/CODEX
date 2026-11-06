@@ -10,6 +10,10 @@ export function defaultState() {
     material: 'enamel',
     tagColor: CONFIG.tagColors[0],
     rim: 'gold',
+    pattern: 'none',
+    topper: 'none',
+    topperColor: '#d9b38c',
+    neck: '',
     front: { line1: 'Бублик', line2: '', font: 'Comfortaa', textColor: 'auto', icon: 'paw' },
     back: { line1: '+7 999 000-00-00', line2: '' },
     cord: 'wax',
@@ -44,6 +48,10 @@ export function calcPrice(st) {
   items.push({ label: `Основа «${shape.name}»`, price: shape.price });
   if (size.price) items.push({ label: `Размер ${size.id}`, price: size.price });
   if (mat.price) items.push({ label: `Материал: ${mat.name}`, price: mat.price });
+  const pat = mat.kind !== 'metal' && CONFIG.patterns.find((x) => x.id === st.pattern);
+  if (pat && pat.price) items.push({ label: `Узор «${pat.name}»`, price: pat.price });
+  const top = CONFIG.toppers.find((x) => x.id === st.topper);
+  if (top && top.price) items.push({ label: `Фигурка «${top.name}»`, price: top.price });
 
   const fc = countChars(st.front.line1) + countChars(st.front.line2);
   if (fc) items.push({ label: `Надпись спереди: ${fc} симв. × ${CONFIG.pricePerFrontChar}`, price: fc * CONFIG.pricePerFrontChar });
@@ -61,7 +69,7 @@ export function calcPrice(st) {
     groups[t.id] = groups[t.id] || { t, n: 0 };
     groups[t.id].n++;
   }
-  for (const { t, n } of Object.values(groups)) items.push({ label: `Бусина «${t.name}» × ${n}`, price: t.price * n });
+  for (const { t, n } of Object.values(groups)) items.push({ label: `${t.group === 'charm' ? 'Подвеска' : 'Бусина'} «${t.name}» × ${n}`, price: t.price * n });
 
   if (st.strass) items.push({ label: `Стразы × ${st.strass}`, price: st.strass * CONFIG.pricePerStrass });
   for (const id of st.extras) {
@@ -86,17 +94,22 @@ export function describe(st) {
   let m = `Материал: ${mat.name}`;
   if (mat.kind !== 'metal') m += `, цвет ${colorName(st.tagColor)}`;
   if (mat.kind === 'enamel') m += `, бортик ${byId(CONFIG.rimColors, st.rim).name}`;
+  const pat = mat.kind !== 'metal' && CONFIG.patterns.find((x) => x.id === st.pattern && x.id !== 'none');
+  if (pat) m += `, узор «${pat.name}»`;
   lines.push(m);
+  const top = CONFIG.toppers.find((x) => x.id === st.topper && x.id !== 'none');
+  if (top) lines.push(`Фигурка на адреснике: ${top.name}, цвет ${st.topperColor}`);
   lines.push(`Спереди: «${st.front.line1}»${st.front.line2 ? ` / «${st.front.line2}»` : ''} — шрифт ${font.name}, цвет ${tc.name}${icon.id !== 'none' ? `, значок ${icon.name}` : ''}`);
   if (st.back.line1 || st.back.line2) lines.push(`Сзади: «${st.back.line1}»${st.back.line2 ? ` / «${st.back.line2}»` : ''}`);
   let c = `Шнурок: ${cord.name}`;
-  if (cord.id === 'wax' || cord.id === 'paracord') c += `, цвет ${colorName(st.cordColor)}`;
+  if (['wax', 'paracord', 'collar'].includes(cord.id)) c += `, цвет ${colorName(st.cordColor)}`;
   if (cord.id === 'chain') c += `, ${byId(CONFIG.chainColors, st.chainColor).name}`;
+  if (cord.id === 'collar') c += `, обхват шеи: ${st.neck ? `${st.neck} см` : 'не указан — уточнить!'}`;
   lines.push(c);
   if (st.beads.length) {
     lines.push(
       'Бусины (по порядку от колечка): ' +
-        st.beads.map((b, i) => `${i + 1}) ${byId(CONFIG.beads, b.type).name}${b.type === 'letter' ? ` «${b.letter}»` : ''} ${colorName(b.color)}`).join('; ')
+        st.beads.map((b, i) => `${i + 1}) ${byId(CONFIG.beads, b.type).name}${b.letter ? ` «${b.letter}»` : ''} ${colorName(b.color)}`).join('; ')
     );
   }
   if (st.strass) lines.push(`Стразы: ${st.strass} шт., ${byId(CONFIG.strassColors, st.strassColor).name}`);
