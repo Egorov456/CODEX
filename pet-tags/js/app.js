@@ -284,10 +284,10 @@ function showSend(text, title, sub) {
   $('#sendWa').href = waLink(text);
   $('#sendWa').hidden = !CONFIG.contacts.whatsapp;
   $('#sendTg').hidden = !CONFIG.contacts.telegram;
-  $('#sendTg').onclick = async () => {
-    await copy(text);
-    toast('Текст заказа скопирован — вставьте его в чат');
-    window.open(`https://t.me/${CONFIG.contacts.telegram}`, '_blank', 'noopener');
+  // обычная ссылка надёжнее window.open; текст копируем в момент нажатия
+  $('#sendTg').href = `https://t.me/${CONFIG.contacts.telegram}`;
+  $('#sendTg').onclick = () => {
+    copy(text).then((ok) => ok && toast('Текст заказа скопирован — вставьте его в чат'));
   };
   $('#copyOrder').onclick = async () => toast((await copy(text)) ? 'Скопировано' : 'Не удалось скопировать');
   if (!dlg.open) dlg.showModal();
