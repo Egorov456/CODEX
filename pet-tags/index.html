@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Mona Vita — адресники и ошейники ручной работы</title>
+  <meta name="description" content="Адресник для кошки или собаки с гравировкой клички и телефона. Соберите сами в 3D-конструкторе: форма, цвет, шнурок, бусины — цена видна сразу." />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Mona Vita — соберите адресник в 3D" />
+  <meta property="og:description" content="Форма, цвет, шнурок, бусины и гравировка. Цена сразу, ручная работа." />
+  <meta name="theme-color" content="#ef5f8b" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐾%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Comfortaa:wght@700&family=Lobster&family=Montserrat:wght@500;600;700;800&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/landing.css" />
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body class="landing">
+  <!-- шаблон цветочка для декора -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="flower" viewBox="-50 -50 100 100">
+      <g fill="currentColor">
+        <ellipse cx="0" cy="-24" rx="15" ry="22" /><ellipse cx="0" cy="-24" rx="15" ry="22" transform="rotate(72)" />
+        <ellipse cx="0" cy="-24" rx="15" ry="22" transform="rotate(144)" /><ellipse cx="0" cy="-24" rx="15" ry="22" transform="rotate(216)" />
+        <ellipse cx="0" cy="-24" rx="15" ry="22" transform="rotate(288)" />
+      </g>
+      <circle r="11" fill="#fff3c4" />
+    </symbol>
+  </svg>
+
+  <header class="nav">
+    <div class="wrap">
+      <div class="nav-pill">
+        <div class="nav-social" id="navSocial"></div>
+        <a class="logo" href="./"><b data-brand></b></a>
+        <nav class="nav-links" aria-label="Разделы">
+          <a href="#ideas">Каталог</a>
+          <a href="#about">О нас</a>
+          <a href="#prices">Цены</a>
+          <a href="#faq">Доставка</a>
+          <a href="#lead">Контакты</a>
+        </nav>
+        <a class="btn primary sm" href="constructor.html" data-goal="open_constructor">Собрать</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Первый экран: огромное название, поверх — живой 3D-адресник -->
+    <section class="hero">
+      <div class="wrap hero-in">
+        <h1 class="hero-mark"><span data-brand id="heroMark"></span><span class="sr-only"> — адресники для питомцев ручной работы</span></h1>
+        <svg class="hero-bloom" aria-hidden="true"><use href="#flower" /></svg>
+        <svg class="deco f1" aria-hidden="true"><use href="#flower" /></svg>
+        <svg class="deco f2" aria-hidden="true"><use href="#flower" /></svg>
+        <svg class="deco f3" aria-hidden="true"><use href="#flower" /></svg>
+        <div class="hero-stage">
+          <canvas id="heroCanvas" aria-label="3D-примеры адресников"></canvas>
+        </div>
+        <p class="hero-note">Сделано вручную<br />под каждого питомца</p>
+        <p class="hero-side">Никаких безликих жетонов из зоомагазина — только адресник, который хочется надеть, даже если питомец никогда не теряется.</p>
+        <div class="hero-left">
+          <p><mark>Яркие адресники,</mark> которые вы соберёте сами — и сразу увидите в 3D</p>
+          <a class="btn primary" href="constructor.html" data-goal="open_constructor">✦ Собрать свой</a>
+          <span class="stage-caption" id="heroCaption" aria-live="polite"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Бегущая лента -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee-track">
+        <span>✿ ручная работа ✿ ошейники-бусы ✿ подвески-фигурки ✿ гравировка клички ✿ телефон на обороте ✿ полимерная глина ✿ поталь ✿ буквы из бусин ✿ парные браслеты для хозяев </span>
+        <span>✿ ручная работа ✿ ошейники-бусы ✿ подвески-фигурки ✿ гравировка клички ✿ телефон на обороте ✿ полимерная глина ✿ поталь ✿ буквы из бусин ✿ парные браслеты для хозяев </span>
+      </div>
+    </div>
+
+    <!-- Готовые идеи -->
+    <section class="section" id="ideas">
+      <div class="wrap">
+        <p class="label">/ Бестселлеры /</p>
+        <div class="ideas" id="ideas-grid"></div>
+      </div>
+    </section>
+
+    <!-- О нас: розовая волна с «полароидами» -->
+    <section class="wave" id="about">
+      <svg class="wave-bloom" aria-hidden="true"><use href="#flower" /></svg>
+      <div class="wrap about-in">
+        <figure class="polaroid p1"><div data-thumb="strawberry"></div></figure>
+        <div class="about-text">
+          <p class="label center">/ О нас /</p>
+          <h2>Адресник — это не жетон с номером, а&nbsp;украшение с&nbsp;характером</h2>
+          <p>Каждый адресник мастер собирает вручную по вашему макету: форма, цвет, кличка, бусины. На обороте — ваш телефон, чтобы нашедший сразу позвонил.</p>
+        </div>
+        <figure class="polaroid p2"><div data-thumb="stripes"></div></figure>
+      </div>
+    </section>
+
+    <!-- Категории -->
+    <section class="section" id="cats">
+      <div class="wrap">
+        <p class="label">/ Для кого /</p>
+        <div class="cats">
+          <a class="cat c1" href="constructor.html#preset-strawberry" data-preset="strawberry"><div data-thumb="strawberry"></div><span>Ошейники-бусы</span></a>
+          <a class="cat c2" href="constructor.html#preset-stripes" data-preset="stripes"><div data-thumb="stripes"></div><span>Из полимерной глины</span></a>
+          <a class="cat c3" href="constructor.html#preset-nova" data-preset="nova"><div data-thumb="nova"></div><span>Имя из бусин</span></a>
+          <a class="cat c4" href="constructor.html#preset-barista" data-preset="barista"><div data-thumb="barista"></div><span>С подвесками</span></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Бусины и подвески -->
+    <section class="section" id="parts">
+      <div class="wrap">
+        <p class="label">/ Бусины и подвески /</p>
+        <div class="parts-head">
+          <h2>Соберите из&nbsp;деталей, как&nbsp;конструктор</h2>
+          <a class="btn primary" href="constructor.html" data-goal="open_constructor">✦ Перейти к сборке</a>
+        </div>
+        <div class="parts" id="partsGrid"></div>
+      </div>
+    </section>
+
+    <!-- История бренда -->
+    <section class="wave story" id="story">
+      <div class="wrap story-in">
+        <figure class="polaroid p1"><div class="ph">🐾<span>Фото Виты</span></div><figcaption>Вита</figcaption></figure>
+        <div class="about-text">
+          <p class="label center">/ История бренда /</p>
+          <h2>Бренд, рождённый из&nbsp;любви к&nbsp;двум собакам</h2>
+          <p>Моя Вита научила меня смелости, драйву и подарила идею этого проекта. А моя Моника каждый день вдохновляет продолжать, творить и создавать красоту для ваших хвостиков.</p>
+        </div>
+        <figure class="polaroid p2"><div class="ph">🐾<span>Фото Моники</span></div><figcaption>Моника</figcaption></figure>
+      </div>
+    </section>
+
+    <!-- Как заказать -->
+    <section class="section" id="how">
+      <div class="wrap">
+        <p class="label">/ Как заказать /</p>
+        <ol class="steps">
+          <li><b>Соберите адресник</b><p>Форма, материал, кличка, телефон, шнурок, бусины, стразы — всё в 3D-конструкторе.</p></li>
+          <li><b>Оформите заказ</b><p>Оставьте имя и телефон. Мастер получит макет и свяжется, чтобы подтвердить детали.</p></li>
+          <li><b>Получите адресник</b><p>Изготовление — <span data-days></span>, затем отправка удобной службой доставки.</p></li>
+        </ol>
+        <p class="note-text">Каждый адресник собирается под ваш заказ — поэтому можно выбрать любую форму, цвет и надпись. Цена считается прямо в конструкторе: у каждой буквы, бусины и детали своя стоимость.</p>
+      </div>
+    </section>
+
+    <!-- Цены -->
+    <section class="section tint" id="prices">
+      <div class="wrap prices-in">
+        <div class="prices-copy">
+          <p class="label left">/ Цены /</p>
+          <h2>Платите только за&nbsp;то, что&nbsp;выбрали</h2>
+          <div class="example" id="priceExample"></div>
+        </div>
+        <table class="price-table" id="priceTable"></table>
+      </div>
+    </section>
+
+    <!-- Заявка -->
+    <section class="section" id="lead">
+      <div class="wrap lead-in">
+        <div class="lead-copy">
+          <p class="label left">/ Консультация /</p>
+          <h2>Не знаете, что&nbsp;выбрать?</h2>
+          <p>Оставьте заявку — мастер подскажет форму и цвета под характер питомца и рассчитает стоимость.</p>
+          <p class="contacts" id="contacts"></p>
+          <svg class="lead-bloom" aria-hidden="true"><use href="#flower" /></svg>
+        </div>
+        <form class="lead-form" id="leadForm" novalidate>
+          <label for="l-name">Ваше имя*<input id="l-name" name="name" required maxlength="60" autocomplete="name" /></label>
+          <label for="l-phone">Телефон*<input id="l-phone" name="phone" required maxlength="30" inputmode="tel" autocomplete="tel" placeholder="+7 …" /></label>
+          <fieldset class="pet">
+            <legend>Для кого адресник</legend>
+            <label><input type="radio" name="pet" value="Кошка" checked /> Кошка</label>
+            <label><input type="radio" name="pet" value="Собака" /> Собака</label>
+            <label><input type="radio" name="pet" value="Другой питомец" /> Другой</label>
+          </fieldset>
+          <label for="l-msg">Вопрос или идея<textarea id="l-msg" name="message" maxlength="800" placeholder="Например: хочу розовое сердечко с жемчугом для котёнка"></textarea></label>
+          <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          <label class="check"><input type="checkbox" name="agree" required /> <span>Согласен(на) на обработку персональных данных по <a href="privacy.html" target="_blank">политике конфиденциальности</a></span></label>
+          <p class="form-err" id="leadErr" role="alert" hidden></p>
+          <button class="btn primary lg" type="submit">✦ Получить консультацию</button>
+        </form>
+        <div class="lead-done" id="leadDone" hidden>
+          <h3 id="leadDoneTitle">Спасибо!</h3>
+          <p id="leadDoneText"></p>
+          <div class="send-grid" id="leadSend">
+            <a class="btn wa" id="leadWa" target="_blank" rel="noopener">Отправить в WhatsApp</a>
+            <a class="btn tg" id="leadTg" target="_blank" rel="noopener">Отправить в Telegram</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Вопросы -->
+    <section class="section" id="faq">
+      <div class="wrap narrow">
+        <p class="label">/ Вопросы /</p>
+        <div class="faq" id="faqList"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <a class="foot-cta" href="constructor.html" data-goal="open_constructor">Собрать адресник →</a>
+      <p class="foot-mark" aria-hidden="true" data-brand></p>
+      <div class="foot-row">
+        <span class="muted" data-tagline></span>
+        <div class="foot-links" id="footContacts"></div>
+        <a href="privacy.html">Политика конфиденциальности</a>
+      </div>
+    </div>
+  </footer>
+
+  <div class="float-msg" id="floatMsg"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/landing.js"></script>
+</body>
+</html>
