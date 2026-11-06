@@ -131,6 +131,7 @@ EOF
 }
 
 setup_bot() {
+  if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] && [ -f /etc/pettags.env ]; then set -a; . /etc/pettags.env; set +a; fi
   [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] || { warn "Токен бота не задан — заявки клиенты будут отправлять через мессенджеры сами"; return 0; }
   has_systemd || { warn "Нет systemd — приём заявок не установлен"; return 0; }
   command -v python3 >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null
@@ -159,6 +160,7 @@ EOF
   systemctl enable --now pettags-orders >/dev/null 2>&1
   systemctl restart pettags-orders
   sed -i "s#orderEndpoint: '[^']*'#orderEndpoint: '/api/order'#" "$WEB/js/config.js"
+  [ -n "${PETTAGS_QUIET:-}" ] && { ok "Приём заявок в Telegram работает"; return 0; }
   sleep 1
   if curl -s --max-time 25 -X POST -H 'Content-Type: application/json' \
       -d '{"id":"test","text":"✅ Сайт адресников подключён. Сюда будут приходить заявки и заказы."}' \
@@ -183,6 +185,7 @@ case "$MODE" in
     touch "$STATE"; install_nginx
     say "Копирую сайт в $WEB"
     [ -d "$WEB" ] && cp -a "$WEB" "$WEB.bak-$(date +%s)"
+    ls -1dt "$WEB".bak-* 2>/dev/null | tail -n +4 | while read -r old; do rm -rf -- "$old"; done
     install -d "$WEB"; cp -a "$SITE_SRC/." "$WEB/"; rm -rf "$WEB/api" "$WEB/deploy"
     chown -R root:root "$WEB"; find "$WEB" -type d -exec chmod 755 {} +; find "$WEB" -type f -exec chmod 644 {} +
     [ -f "$NGX_CONF" ] && cp "$NGX_CONF" "$NGX_CONF.bak"
@@ -206,8 +209,46 @@ case "$MODE" in
     echo; ok "Готово: http://$(public_ip):$SITE_PORT/"
     say "Если страница не открывается снаружи — у хостинга может быть свой фаервол: откройте TCP $SITE_PORT в панели."
     ;;
+  autoupdate)
+    has_systemd || die "Нужен systemd"
+    command -v git >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git >/dev/null
+    BR="${2:-${PETTAGS_BRANCH:-main}}"
+    install -d -m 755 "$OPT"; install -m 755 "$HERE/autoupdate.sh" "$OPT/autoupdate.sh"
+    printf 'REPO=%s\nBRANCH=%s\n' "${PETTAGS_REPO:-Egorov456/CODEX}" "$BR" > /etc/pettags-autoupdate.conf
+    cat > /etc/systemd/system/pettags-update.service <<EOF
+[Unit]
+Description=Автообновление сайта адресников из GitHub
+After=network-online.target
+[Service]
+Type=oneshot
+ExecStart=$OPT/autoupdate.sh
+Nice=10
+EOF
+    cat > /etc/systemd/system/pettags-update.timer <<EOF
+[Unit]
+Description=Проверка обновлений сайта адресников каждые 5 минут
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+[Install]
+WantedBy=timers.target
+EOF
+    systemctl daemon-reload
+    systemctl enable --now pettags-update.timer >/dev/null 2>&1
+    ok "Автообновление включено: ветка $BR, проверка каждые 5 минут"
+    say "Журнал обновлений: journalctl -t pettags   ·   выключить: bash ${PETTAGS_CMD:-$0} autoupdate-off"
+    ;;
+  autoupdate-off)
+    systemctl disable --now pettags-update.timer >/dev/null 2>&1 || true
+    rm -f /etc/systemd/system/pettags-update.service /etc/systemd/system/pettags-update.timer /etc/pettags-autoupdate.conf
+    systemctl daemon-reload
+    ok "Автообновление выключено, сайт оставлен как есть"
+    ;;
   uninstall)
     VPN_BEFORE="$(vpn_snapshot)"
+    systemctl disable --now pettags-update.timer >/dev/null 2>&1 || true
+    rm -f /etc/systemd/system/pettags-update.service /etc/systemd/system/pettags-update.timer /etc/pettags-autoupdate.conf
     if has_systemd; then
       systemctl disable --now pettags-orders >/dev/null 2>&1 || true
       rm -f /etc/systemd/system/pettags-orders.service; systemctl daemon-reload
@@ -219,5 +260,5 @@ case "$MODE" in
     ok "Сайт удалён (nginx и VPN оставлены как есть)"
     check_vpn_after "$VPN_BEFORE" || true
     ;;
-  *) die "Режим: check | install | uninstall" ;;
+  *) die "Режим: check | install | autoupdate [ветка] | autoupdate-off | uninstall" ;;
 esac
