@@ -23,6 +23,19 @@ export function defaultState() {
   };
 }
 
+// Состояние из готовой идеи (частичные поля + значения по умолчанию)
+export function presetState(p) {
+  const d = defaultState();
+  const s = p.state || {};
+  return {
+    ...d, ...s,
+    front: { ...d.front, ...(s.front || {}) },
+    back: { ...d.back, ...(s.back || {}) },
+    beads: (s.beads || []).map((b, i) => ({ id: `${p.id}-${i}`, ...b })),
+    extras: [...(s.extras || [])],
+  };
+}
+
 export function calcPrice(st) {
   const items = [];
   const shape = byId(CONFIG.shapes, st.shape);

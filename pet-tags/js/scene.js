@@ -136,9 +136,12 @@ function textTexture(lines, icon, area, style) {
 
 // ---------- Сцена ----------
 export class TagScene {
-  constructor(canvas) {
+  // opts.interactive=false — витрина без управления (крутится сама, не мешает прокрутке страницы)
+  // opts.offscreen={width,height} — невидимая сцена для рендера превью (без цикла анимации)
+  constructor(canvas, opts = {}) {
     this.canvas = canvas;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    this.opts = opts;
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: !!opts.offscreen });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -156,6 +159,7 @@ export class TagScene {
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = true;
     this.controls.enablePan = false;
+    if (opts.interactive === false) this.controls.enabled = false;
     this.controls.minDistance = 4;
     this.controls.maxDistance = 22;
     this.controls.autoRotate = true;
@@ -169,7 +173,9 @@ export class TagScene {
       clearTimeout(this._idle);
       this._idle = setTimeout(() => (this.controls.autoRotate = this.autoRotateEnabled), 5000);
     });
-    this.autoRotateEnabled = true;
+    this.autoRotateEnabled = opts.interactive !== false;
+    this.controls.autoRotate = this.autoRotateEnabled;
+    this.spin = opts.interactive === false ? 0.6 : 0; // скорость покачивания витрины
 
     this.root = new THREE.Group();
     this.scene.add(this.root);
@@ -183,9 +189,16 @@ export class TagScene {
     this.targetDist = 12;
     this.flipTarget = 0;
 
+    if (opts.offscreen) {
+      this.renderer.setPixelRatio(1);
+      this.renderer.setSize(opts.offscreen.width, opts.offscreen.height, false);
+      this.camera.aspect = opts.offscreen.width / opts.offscreen.height;
+      this.camera.updateProjectionMatrix();
+      return;
+    }
     new ResizeObserver(() => this.resize()).observe(canvas.parentElement);
     this.resize();
-    this.clock = new THREE.Clock();
+    this._last = performance.now();
     this.renderer.setAnimationLoop(() => this.tick());
   }
 
@@ -208,6 +221,9 @@ export class TagScene {
 
   tick() {
     const now = performance.now();
+    const dt = Math.min(0.1, (now - this._last) / 1000);
+    this._last = now;
+    if (this.spin) this.flipTarget = Math.sin((now / 1000) * this.spin) * 0.75; // витрина покачивается, надпись видна
     this.anims = this.anims.filter((a) => {
       const t = Math.min(1, Math.max(0, (now - a.start) / a.dur));
       if (now < a.start) return true;
@@ -552,6 +568,33 @@ export class TagScene {
     this.resetView();
     this._userZoomed = false;
     return t + 600;
+  }
+
+  // мгновенно завершить анимации и выставить камеру — для превью
+  settle() {
+    for (const a of this.anims) {
+      if (a.kind === 'move') a.obj.position.copy(a.to);
+      else a.obj.scale.setScalar(a.kind === 'out' ? 0.0001 : 1);
+      a.onDone?.();
+    }
+    this.anims = [];
+    this.root.rotation.y = this.flipTarget = -0.35;
+    this.controls.target.set(0, this.targetY, 0);
+    this.camera.position.set(0, this.targetY + 0.5, this.targetDist * 0.92);
+    this.camera.lookAt(this.controls.target);
+  }
+
+  render(st) {
+    this.update(st);
+    this.settle();
+    this.renderer.render(this.scene, this.camera);
+    return this.canvas.toDataURL('image/png');
+  }
+
+  dispose() {
+    this.renderer.setAnimationLoop(null);
+    this.scene.traverse((o) => o !== this.scene && o.geometry && dispose(o));
+    this.renderer.dispose();
   }
 
   snapshot() {

@@ -1,4 +1,4 @@
-// Серверная функция (Vercel / Netlify-совместимый Node 18+): принимает заказ и пересылает мастеру в Telegram.
+// Серверная функция (Vercel, Node 18+): принимает заказы из конструктора и заявки с главной, пересылает мастеру в Telegram.
 // Переменные окружения: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID. Токен никогда не попадает в браузер.
 
 const MAX_TEXT = 3800;
@@ -14,6 +14,7 @@ export default async function handler(req, res) {
   if (typeof body === 'string') {
     try { body = JSON.parse(body); } catch { return res.status(400).json({ error: 'json' }); }
   }
+  if (body?.website) return res.status(200).json({ ok: true }); // ловушка для ботов
   const text = typeof body?.text === 'string' ? body.text.slice(0, MAX_TEXT) : '';
   const id = typeof body?.id === 'string' ? body.id.slice(0, 20) : '';
   if (!text) return res.status(400).json({ error: 'empty' });

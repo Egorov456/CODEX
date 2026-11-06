@@ -15,9 +15,17 @@ export const CONFIG = {
     email: '',
   },
 
-  // Адрес серверной функции приёма заказов (см. README → «Заказы в Telegram»).
-  // Пусто — заказ отправляется через WhatsApp/Telegram вручную.
+  // Адрес серверной функции приёма заказов и заявок (см. README → «Заявки в Telegram»).
+  // Пусто — клиент отправляет заказ/заявку через WhatsApp/Telegram вручную.
   orderEndpoint: '',
+
+  // Яндекс.Метрика: номер счётчика (только цифры). Пусто — аналитика выключена.
+  metrikaId: '',
+
+  // ⚠️ Проверьте и поправьте под свои реальные условия — эти тексты видят клиенты.
+  productionDays: '3–5 рабочих дней',
+  delivery: 'Отправляем по всей России Почтой, СДЭК или Ozon — стоимость по тарифу службы доставки.',
+  payment: 'После того как мастер подтвердит макет: переводом по СБП или на карту.',
 
   limits: { frontLine: 12, frontLine2: 18, backLine: 18, beads: 12 },
 
@@ -110,6 +118,40 @@ export const CONFIG = {
     { id: 'clear', name: 'Прозрачные', color: '#f4fbff' },
     { id: 'pink', name: 'Розовые', color: '#ff8fc7' },
     { id: 'blue', name: 'Голубые', color: '#8fd8ff' },
+  ],
+
+  // ---------- Готовые идеи на главной (открываются в конструкторе для правки) ----------
+  // Поля как в конструкторе; не указанное берётся по умолчанию.
+  presets: [
+    { id: 'princess', title: 'Для кошки-принцессы', state: {
+      shape: 'heart', material: 'enamel', tagColor: '#f28bb0', rim: 'gold', strass: 6, strassColor: 'pink',
+      front: { line1: 'Мурка', font: 'Lobster', icon: 'crown' }, cord: 'wax', cordColor: '#e94e77',
+      beads: [{ type: 'pearl', color: '#ffffff' }, { type: 'heart', color: '#ff4f81' }, { type: 'pearl', color: '#ffffff' }] } },
+    { id: 'classic', title: 'Классика для собаки', state: {
+      shape: 'bone', material: 'gold', front: { line1: 'Рекс', font: 'Montserrat', icon: 'paw' }, cord: 'chain', chainColor: 'gold' } },
+    { id: 'name', title: 'Имя из бусин', state: {
+      shape: 'circle', material: 'steel', front: { line1: 'Бублик', font: 'Comfortaa', icon: 'paw' }, cord: 'wax', cordColor: '#1e1e24', beadLayout: 'row',
+      beads: [...'БУБЛИК'].map((l) => ({ type: 'letter', color: '#ffffff', letter: l })) } },
+    { id: 'fish', title: 'Рыбка для кота', state: {
+      shape: 'fish', material: 'enamel', tagColor: '#5ec8e5', rim: 'silver', front: { line1: 'Барсик', font: 'Comfortaa', icon: 'none' },
+      cord: 'paracord', cordColor: '#2e86de', beads: [{ type: 'facet', color: '#48dbfb' }, { type: 'metal', color: '#d3d6db' }] } },
+    { id: 'flower', title: 'Цветочек с бусинами', state: {
+      shape: 'flower', material: 'acrylic', tagColor: '#ffe066', front: { line1: 'Ася', font: 'Caveat', icon: 'heart' }, cord: 'wax', cordColor: '#3bb273',
+      beads: [{ type: 'round', color: '#ff9f43' }, { type: 'star', color: '#feca57' }, { type: 'round', color: '#ff9f43' }, { type: 'star', color: '#feca57' }] } },
+    { id: 'star', title: 'Звёздочка со стразами', state: {
+      shape: 'star', material: 'enamel', tagColor: '#6c8cff', rim: 'silver', strass: 10, strassColor: 'clear',
+      front: { line1: 'Луна', font: 'Lobster', icon: 'none' }, cord: 'chain', chainColor: 'silver', beads: [{ type: 'pearl', color: '#f8c8dc' }] } },
+  ],
+
+  // ---------- Частые вопросы на главной ----------
+  // {days}, {delivery}, {payment} подставляются из настроек выше.
+  faq: [
+    ['Сколько делается адресник?', 'Обычно {days}. Если нужно быстрее — выберите «Срочно» в конструкторе, сделаем за 1–2 дня.'],
+    ['Цена в конструкторе окончательная?', 'Да, это стоимость самого адресника со всеми выбранными деталями. Доставка оплачивается отдельно.'],
+    ['Как вы доставляете?', '{delivery}'],
+    ['Как оплатить?', '{payment}'],
+    ['Можно поменять макет после заказа?', 'Да. Перед началом работы мастер связывается с вами, и все детали можно поправить.'],
+    ['Можно сделать по моей идее?', 'Конечно. Опишите её в комментарии к заказу или оставьте заявку — мастер подскажет, как лучше воплотить.'],
   ],
 
   // ---------- Дополнительно ----------

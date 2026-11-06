@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { buildShape } from './shapes.js';
-import { calcPrice, countChars, defaultState, describe, newOrderId, orderText } from './pricing.js';
+import { calcPrice, countChars, defaultState, describe, newOrderId, orderText, presetState } from './pricing.js';
+import { copy, goal, initAnalytics, postToMaster, tgLink, waLink } from './send.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const h = (tag, attrs = {}, ...kids) => {
@@ -25,6 +26,18 @@ try {
   const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
   if (saved) st = { ...st, ...saved, front: { ...st.front, ...saved.front }, back: { ...st.back, ...saved.back } };
 } catch { /* приватный режим — работаем без сохранения */ }
+
+// Готовая идея с главной: #preset-<id> в адресе или отметка в localStorage
+let presetId = (location.hash.match(/^#preset-([\w-]+)/) || [])[1];
+try {
+  presetId = presetId || localStorage.getItem('pettag-preset');
+  localStorage.removeItem('pettag-preset');
+} catch { /* ignore */ }
+const preset = CONFIG.presets.find((p) => p.id === presetId);
+if (preset) {
+  st = presetState(preset);
+  try { history.replaceState(null, '', location.pathname); } catch { /* ignore */ }
+}
 
 let scene = null;
 const refreshers = [];
@@ -257,7 +270,6 @@ function buildPanel() {
 const dlg = $('#dlg');
 let orderId = '';
 
-function waLink(text) { return `https://wa.me/${CONFIG.contacts.whatsapp}?text=${encodeURIComponent(text)}`; }
 
 function photo() {
   return scene ? scene.snapshot() : '';
@@ -268,12 +280,6 @@ function downloadPhoto() {
   document.body.append(a); a.click(); a.remove();
 }
 
-async function copy(text) {
-  try { await navigator.clipboard.writeText(text); return true; } catch {
-    const t = h('textarea', {}, text); document.body.append(t); t.select();
-    const ok = document.execCommand('copy'); t.remove(); return ok;
-  }
-}
 
 function showSend(text, title, sub) {
   $('#orderForm').hidden = true;
@@ -285,10 +291,12 @@ function showSend(text, title, sub) {
   $('#sendWa').hidden = !CONFIG.contacts.whatsapp;
   $('#sendTg').hidden = !CONFIG.contacts.telegram;
   // обычная ссылка надёжнее window.open; текст копируем в момент нажатия
-  $('#sendTg').href = `https://t.me/${CONFIG.contacts.telegram}`;
+  $('#sendTg').href = tgLink();
   $('#sendTg').onclick = () => {
+    goal('messenger_click', { via: 'telegram' });
     copy(text).then((ok) => ok && toast('Текст заказа скопирован — вставьте его в чат'));
   };
+  $('#sendWa').onclick = () => goal('messenger_click', { via: 'whatsapp' });
   $('#copyOrder').onclick = async () => toast((await copy(text)) ? 'Скопировано' : 'Не удалось скопировать');
   if (!dlg.open) dlg.showModal();
 }
@@ -306,25 +314,25 @@ $('#orderForm').addEventListener('submit', async (e) => {
   const customer = { name: f.get('name').trim(), phone: f.get('phone').trim(), contact: f.get('contact'), delivery: f.get('delivery').trim() };
   orderId = newOrderId();
   const text = orderText(st, customer, orderId);
+  const { total } = calcPrice(st);
+  goal('order_submit', { order_price: total });
+  if (f.get('website')) { showSend(text, 'Спасибо!', 'Заказ принят.'); return; } // ловушка для ботов
   if (CONFIG.orderEndpoint) {
     const btn = e.target.querySelector('[type=submit]');
     btn.disabled = true; btn.textContent = 'Отправляем…';
-    try {
-      const r = await fetch(CONFIG.orderEndpoint, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: orderId, text, image: photo(), state: st }),
-      });
-      if (!r.ok) throw new Error(r.status);
+    const ok = await postToMaster({ kind: 'order', id: orderId, text, image: photo() });
+    btn.disabled = false; btn.textContent = 'Отправить заказ';
+    if (ok) {
       showSend(text, `Заказ ${orderId} отправлен! 🎉`, 'Мастер уже получил заказ и скоро свяжется с вами. Копия заказа ниже.');
       return;
-    } catch {
-      toast('Не удалось отправить автоматически — отправьте вручную');
-    } finally { btn.disabled = false; btn.textContent = 'Отправить заказ'; }
+    }
+    toast('Не удалось отправить автоматически — отправьте вручную');
   }
   showSend(text, `Заказ ${orderId} почти готов`, 'Отправьте его мастеру одним нажатием. Фото макета можно скачать и приложить.');
 });
 
 function advice() {
+  goal('advice_click');
   const { total } = calcPrice(st);
   const text = ['Здравствуйте! Хочу посоветоваться по адреснику 🐾', '', ...describe(st), `Сумма по конструктору: ${money(total)}`,
     st.comment ? `\nВопрос/пожелания: ${st.comment}` : ''].join('\n').trim();
@@ -334,6 +342,8 @@ function advice() {
 
 // ---------- Запуск ----------
 async function init() {
+  initAnalytics();
+  if (preset) setTimeout(() => toast(`Идея «${preset.title}» — меняйте что угодно`), 900);
   $('#brand').textContent = CONFIG.brand;
   $('#tagline').textContent = CONFIG.tagline;
   document.title = `${CONFIG.brand} — конструктор адресника`;

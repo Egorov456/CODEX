@@ -25,6 +25,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
   font-family: Montserrat, system-ui, sans-serif;
@@ -36,7 +37,8 @@ body {
 button, input, select, textarea { font: inherit; color: inherit; }
 
 .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; }
-.logo { font-size: 18px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.logo { color: inherit; text-decoration: none; font-size: 18px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
 .logo span { color: var(--muted); font-size: 13px; }
 
 .layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(340px, 1fr); gap: 20px; padding: 0 20px 20px; max-width: 1400px; margin: 0 auto; }
@@ -128,7 +130,7 @@ textarea.input { min-height: 90px; resize: vertical; }
 .btn.sm { padding: 7px 12px; font-size: 13px; }
 .btn.primary { background: var(--accent); color: var(--accent-ink); }
 .btn.primary:hover { filter: brightness(1.05); }
-.btn.ghost { background: transparent; border-color: var(--line); }
+.btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
 .btn.ghost:hover { border-color: var(--accent); }
 .btn.wa { background: #25d366; color: #fff; }
 .btn.tg { background: #2aabee; color: #fff; }
