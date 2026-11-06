@@ -4,8 +4,8 @@
 // =====================================================================
 
 export const CONFIG = {
-  brand: 'Лапушка',
-  tagline: 'Адресники для питомцев ручной работы',
+  brand: 'Mona Vita',
+  tagline: 'Адресники и ошейники ручной работы',
   currency: '₽',
 
   // Контакты мастера (без «+», только цифры для WhatsApp; ник Telegram без @)
@@ -157,6 +157,7 @@ export const CONFIG = {
   // Поля как в конструкторе; не указанное берётся по умолчанию.
   presets: [
     { id: 'family', title: 'Фэмили-лук: ошейник + браслет', badge: 'Парные', state: {
+      pet: 'cat', extras: ['breakaway'],
       shape: 'bone', material: 'enamel', tagColor: '#d8c3a5', rim: 'gold', front: { line1: 'Моника', font: 'Montserrat', textColor: 'black', icon: 'none' },
       cord: 'collar', cordColor: '#7a7d4a', beadLayout: 'sym', extras: ['bracelet'],
       beads: [['silicone', '#c4683f'], ['silicone', '#c4683f'], ['round', '#d8c3a5'], ['round', '#d8c3a5'], ['metal', '#e6b84f'], ['metal', '#e6b84f'],
@@ -193,6 +194,7 @@ export const CONFIG = {
       shape: 'circle', material: 'epoxy', tagColor: '#f4f1ea', pattern: 'goldleaf', front: { line1: 'Барби', font: 'Lobster', textColor: 'gold', icon: 'none' },
       cord: 'paracord', cordColor: '#8a9a2b' } },
     { id: 'princess', title: 'Для кошки-принцессы', state: {
+      pet: 'cat', extras: ['breakaway'],
       shape: 'heart', material: 'enamel', tagColor: '#f28bb0', rim: 'gold', strass: 6, strassColor: 'pink',
       front: { line1: 'Мурка', font: 'Lobster', icon: 'crown' }, cord: 'wax', cordColor: '#e94e77',
       beads: [{ type: 'pearl', color: '#ffffff' }, { type: 'heart', color: '#ff4f81' }, { type: 'pearl', color: '#ffffff' }] } },
@@ -217,7 +219,8 @@ export const CONFIG = {
   extras: [
     { id: 'bracelet', name: 'Парный браслет для хозяина', price: 690 },
     { id: 'nfc', name: 'NFC-метка: контакты касанием телефона', price: 290 },
-    { id: 'steel', name: 'Стальной тросик внутри шнура', price: 250 },
+    { id: 'steel', name: 'Стальной тросик внутри шнура', price: 250, only: 'dog' },
+    { id: 'breakaway', name: 'Безопасная застёжка (расстёгивается при рывке)', price: 150, only: 'cat' },
     { id: 'box', name: 'Подарочная коробочка', price: 150 },
     { id: 'urgent', name: 'Срочно — за 1–2 дня', price: 300 },
   ],

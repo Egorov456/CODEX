@@ -15,6 +15,7 @@ export function defaultState() {
     topperColor: '#d9b38c',
     neck: '',
     wrist: '',
+    pet: 'dog',
     front: { line1: 'Бублик', line2: '', font: 'Comfortaa', textColor: 'auto', icon: 'paw' },
     back: { line1: '+7 999 000-00-00', line2: '' },
     cord: 'wax',
@@ -114,6 +115,7 @@ export function describe(st) {
     );
   }
   if (st.strass) lines.push(`Стразы: ${st.strass} шт., ${byId(CONFIG.strassColors, st.strassColor).name}`);
+  lines.unshift(`Для кого: ${st.pet === 'cat' ? 'кошка' : 'собака'}`);
   if (st.extras.includes('bracelet')) lines.push(`Браслет для хозяина: тот же шнур и бусины, обхват запястья: ${st.wrist ? `${st.wrist} см` : 'не указан — уточнить!'}`);
   const ex = st.extras.map((id) => CONFIG.extras.find((x) => x.id === id)?.name).filter(Boolean);
   if (ex.length) lines.push(`Дополнительно: ${ex.join(', ')}`);

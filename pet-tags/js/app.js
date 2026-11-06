@@ -216,7 +216,15 @@ function buildPanel() {
     chainColor.hidden = st.cord !== 'chain';
     neckBox.hidden = neckNote.hidden = st.cord !== 'collar';
   });
+  const petNote = h('p', { class: 'note' }, 'Для кошек советуем безопасную застёжку: если кошка зацепится ошейником за ветку, он расстегнётся. Стальной тросик для кошек не делаем.');
+  refreshers.push(() => (petNote.hidden = st.pet !== 'cat'));
   P.append(step(5, 'Шнурок или ошейник', () => cord().name,
+    field('Для кого', chips([{ id: 'dog', name: '🐶 Собака' }, { id: 'cat', name: '🐱 Кошка' }], () => st.pet || 'dog', (p) => set((x) => {
+      x.pet = p.id;
+      // стальной тросик — только собакам; кошкам предлагаем безопасную застёжку
+      x.extras = x.extras.filter((id) => (CONFIG.extras.find((e) => e.id === id)?.only || p.id) === p.id);
+    }, p.id === 'cat' ? 'Для кошки' : 'Для собаки'), (p) => [p.name])),
+    petNote,
     field('Крепление', chips(CONFIG.cords, () => st.cord, (c) => set((x) => (x.cord = c.id), c.name),
       (c) => [c.name, h('small', {}, c.price ? money(c.price) : 'включено')])),
     cordColor, chainColor, neckBox, neckNote));
@@ -284,7 +292,10 @@ function buildPanel() {
     extras.append(b);
     return [e, b];
   });
-  refreshers.push(() => exBtns.forEach(([e, b]) => b.setAttribute('aria-pressed', String(st.extras.includes(e.id)))));
+  refreshers.push(() => exBtns.forEach(([e, b]) => {
+    b.setAttribute('aria-pressed', String(st.extras.includes(e.id)));
+    b.hidden = !!e.only && e.only !== (st.pet || 'dog');
+  }));
   const wristInp = h('input', { class: 'input', inputmode: 'decimal', maxlength: 5, placeholder: 'Например, 16', value: st.wrist || '',
     oninput: (e) => set((x) => (x.wrist = e.target.value.replace(/[^\d.,]/g, ''))) });
   const wristBox = field('Обхват запястья хозяина, см*', wristInp);
