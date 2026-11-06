@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Конструктор адресника</title>
+  <meta name="description" content="Соберите адресник для питомца в 3D: форма, цвет, шнурок, бусины, гравировка — цена считается сразу." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Comfortaa:wght@700&family=Lobster&family=Montserrat:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <header class="top">
+    <div class="logo">🐾 <b id="brand"></b><span id="tagline"></span></div>
+    <button class="btn ghost sm" id="adviceTop">Посоветоваться</button>
+  </header>
+
+  <main class="layout">
+    <section class="viewer" aria-label="3D-превью адресника">
+      <canvas id="c"></canvas>
+      <div class="loading" id="loading">Загружаем 3D…</div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      <div class="viewer-tools">
+        <button class="tool" id="flip" title="Перевернуть">↻ <span>Перевернуть</span></button>
+        <button class="tool" id="replay" title="Показать сборку">▶ <span>Сборка</span></button>
+        <button class="tool" id="spin" title="Автовращение" aria-pressed="true">⟳</button>
+        <button class="tool" id="photo" title="Скачать фото">📷</button>
+      </div>
+      <div class="hint">Крутите пальцем или мышкой · колёсико — приблизить</div>
+    </section>
+
+    <section class="panel" id="panel"></section>
+  </main>
+
+  <footer class="bar">
+    <button class="total" id="totalBtn" aria-expanded="false">
+      <small>Итого</small>
+      <b id="total">0 ₽</b>
+      <span class="chev">▴ состав</span>
+    </button>
+    <div class="breakdown" id="breakdown" hidden></div>
+    <div class="bar-actions">
+      <button class="btn ghost" id="advice">Посоветоваться</button>
+      <button class="btn primary" id="order">Оформить заказ</button>
+    </div>
+  </footer>
+
+  <dialog id="dlg">
+    <form method="dialog" id="orderForm" class="dlg-body">
+      <h2>Оформление заказа</h2>
+      <p class="muted">Мастер свяжется с вами, подтвердит детали и сроки.</p>
+      <label>Ваше имя*<input name="name" required maxlength="60" autocomplete="name" /></label>
+      <label>Телефон*<input name="phone" required maxlength="30" inputmode="tel" autocomplete="tel" placeholder="+7 …" /></label>
+      <label>Как удобнее связаться
+        <select name="contact"><option>Telegram</option><option>WhatsApp</option><option>Звонок</option></select>
+      </label>
+      <label>Город и способ доставки<input name="delivery" maxlength="120" placeholder="Москва, СДЭК / самовывоз" /></label>
+      <label class="check"><input type="checkbox" name="agree" required /> Согласен(на) на обработку персональных данных для выполнения заказа</label>
+      <div class="dlg-actions">
+        <button type="button" class="btn ghost" data-close>Отмена</button>
+        <button type="submit" class="btn primary" value="ok">Отправить заказ</button>
+      </div>
+    </form>
+    <div class="dlg-body" id="sent" hidden>
+      <h2 id="sentTitle">Почти готово!</h2>
+      <p class="muted" id="sentText">Отправьте заказ мастеру удобным способом — текст и фото макета уже подготовлены.</p>
+      <pre id="orderPreview"></pre>
+      <div class="send-grid" id="sendGrid">
+        <a class="btn wa" id="sendWa" target="_blank" rel="noopener">WhatsApp</a>
+        <button class="btn tg" id="sendTg" type="button">Telegram</button>
+        <button class="btn ghost" id="copyOrder" type="button">Скопировать текст</button>
+        <button class="btn ghost" id="dlPhoto" type="button">Скачать фото макета</button>
+      </div>
+      <div class="dlg-actions"><button type="button" class="btn ghost" data-close>Готово</button></div>
+    </div>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
