@@ -22,6 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Comfortaa:wght@700&family=Lobster&family=Montserrat:wght@500;600;700;800&family=Unbounded:wght@500;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/landing.css" />
+  <link rel="stylesheet" href="css/apple.css" />
   <script type="importmap">
     { "imports": {
       "three": "./vendor/three/three.module.min.js",
@@ -96,7 +97,7 @@
     <!-- Готовые идеи -->
     <section class="section" id="ideas">
       <div class="wrap">
-        <p class="label">/ Бестселлеры /</p>
+        <header class="sec-head"><p class="label">Бестселлеры</p><h2>Готовые идеи. Измените под&nbsp;себя.</h2></header>
         <div class="filters" id="ideaFilters" role="tablist" aria-label="Фильтр идей"></div>
         <div class="ideas" id="ideas-grid"></div>
       </div>
@@ -108,7 +109,7 @@
       <div class="wrap about-in">
         <figure class="polaroid p1"><div data-thumb="strawberry"></div></figure>
         <div class="about-text">
-          <p class="label center">/ О нас /</p>
+          <p class="label center">О нас</p>
           <h2>Адресник — это не жетон с номером, а&nbsp;украшение с&nbsp;характером</h2>
           <p>Каждый адресник мастер собирает вручную по вашему макету: форма, цвет, кличка, бусины. На обороте — ваш телефон, чтобы нашедший сразу позвонил.</p>
         </div>
@@ -119,7 +120,7 @@
     <!-- Категории -->
     <section class="section" id="cats">
       <div class="wrap">
-        <p class="label">/ Для кого /</p>
+        <header class="sec-head"><p class="label">Для кого</p><h2>Выберите свой стиль.</h2></header>
         <div class="cats">
           <a class="cat c1" href="constructor.html#preset-strawberry" data-preset="strawberry"><div data-thumb="strawberry"></div><span>Ошейники-бусы</span></a>
           <a class="cat c2" href="constructor.html#preset-stripes" data-preset="stripes"><div data-thumb="stripes"></div><span>Из полимерной глины</span></a>
@@ -132,7 +133,7 @@
     <!-- Бусины и подвески -->
     <section class="section" id="parts">
       <div class="wrap">
-        <p class="label">/ Бусины и подвески /</p>
+        <p class="label">Бусины и подвески</p>
         <div class="parts-head">
           <h2>Соберите из&nbsp;деталей, как&nbsp;конструктор</h2>
           <a class="btn primary" href="constructor.html" data-goal="open_constructor">✦ Перейти к сборке</a>
@@ -146,7 +147,7 @@
       <div class="wrap story-in">
         <figure class="polaroid p1"><div class="ph">🐾<span>Фото Виты</span></div><figcaption>Вита</figcaption></figure>
         <div class="about-text">
-          <p class="label center">/ История бренда /</p>
+          <p class="label center">История бренда</p>
           <h2>Бренд, рождённый из&nbsp;любви к&nbsp;двум собакам</h2>
           <p>Моя Вита научила меня смелости, драйву и подарила идею этого проекта. А моя Моника каждый день вдохновляет продолжать, творить и создавать красоту для ваших хвостиков.</p>
         </div>
@@ -157,7 +158,7 @@
     <!-- Как подобрать размер -->
     <section class="section" id="size">
       <div class="wrap">
-        <p class="label">/ Как подобрать размер /</p>
+        <header class="sec-head"><p class="label">Размер</p><h2>Как подобрать размер.</h2></header>
         <div class="sizes">
           <article><b>Ошейник-бусы</b><p>Измерьте шею питомца мягким сантиметром там, где носится ошейник, и прибавьте ширину двух пальцев. Узлы на ошейнике регулируют длину.</p></article>
           <article><b>Адресник</b><p>S · 2,5 см — кошкам и маленьким собакам. M · 3 см — средним. L · 3,5 см — крупным породам.</p></article>
@@ -170,7 +171,7 @@
     <!-- Отзывы (появятся, когда в config.js будут реальные отзывы) -->
     <section class="section" id="reviews" hidden>
       <div class="wrap">
-        <p class="label">/ Отзывы /</p>
+        <header class="sec-head"><p class="label">Отзывы</p><h2>Что говорят хозяева.</h2></header>
         <div class="reviews" id="reviewsList"></div>
       </div>
     </section>
@@ -178,7 +179,7 @@
     <!-- Как заказать -->
     <section class="section" id="how">
       <div class="wrap">
-        <p class="label">/ Как заказать /</p>
+        <header class="sec-head"><p class="label">Как заказать</p><h2>Три шага до&nbsp;адресника.</h2></header>
         <ol class="steps">
           <li><b>Соберите адресник</b><p>Форма, материал, кличка, телефон, шнурок, бусины, стразы — всё в 3D-конструкторе.</p></li>
           <li><b>Согласуйте макет</b><p>Оставьте имя и телефон. Мастер получит макет, свяжется и уточнит детали до начала работы.</p></li>
@@ -192,7 +193,7 @@
     <section class="section tint" id="prices">
       <div class="wrap prices-in">
         <div class="prices-copy">
-          <p class="label left">/ Цены /</p>
+          <p class="label left">Цены</p>
           <h2>Платите только за&nbsp;то, что&nbsp;выбрали</h2>
           <div class="example" id="priceExample"></div>
         </div>
@@ -204,7 +205,7 @@
     <section class="section" id="lead">
       <div class="wrap lead-in">
         <div class="lead-copy">
-          <p class="label left">/ Консультация /</p>
+          <p class="label left">Консультация</p>
           <h2>Не знаете, что&nbsp;выбрать?</h2>
           <p>Оставьте заявку — мастер подскажет форму и цвета под характер питомца и рассчитает стоимость.</p>
           <p class="contacts" id="contacts"></p>
@@ -239,7 +240,7 @@
     <!-- Вопросы -->
     <section class="section" id="faq">
       <div class="wrap narrow">
-        <p class="label">/ Вопросы /</p>
+        <header class="sec-head"><p class="label">Вопросы</p><h2>Частые вопросы.</h2></header>
         <div class="faq" id="faqList"></div>
       </div>
     </section>
@@ -262,5 +263,6 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script type="module" src="js/landing.js"></script>
+  <script type="module" src="js/motion.js"></script>
 </body>
 </html>
