@@ -24,7 +24,10 @@ a{color:inherit}
 /* Nav: glass */
 .nav{position:sticky;top:0;z-index:50;height:52px;background:color-mix(in srgb,var(--bg-alt) 80%,transparent);
   backdrop-filter:saturate(1.8) blur(20px);-webkit-backdrop-filter:saturate(1.8) blur(20px);
-  border-bottom:1px solid color-mix(in srgb,var(--ink) 8%,transparent)}
+  box-shadow:0 1px 0 color-mix(in srgb,var(--ink) 6%,transparent)}
+.nav ul a,.logo{letter-spacing:.01em}
+@media (prefers-reduced-transparency:reduce){.nav{background:var(--bg-alt);backdrop-filter:none;-webkit-backdrop-filter:none}}
+@media (prefers-contrast:more){.nav{background:var(--bg);box-shadow:0 1px 0 var(--ink)}:root{--muted:#3a3a3c}}
 .nav .wrap{display:flex;align-items:center;gap:28px;height:100%}
 .logo{font-weight:700;letter-spacing:-.02em;text-decoration:none;font-size:19px}
 .logo b{color:var(--accent)}
@@ -38,7 +41,7 @@ a{color:inherit}
 .btn{display:inline-block;padding:11px 22px;border-radius:980px;background:var(--accent);color:#fff;text-decoration:none;
   font-size:17px;border:0;cursor:pointer;font-family:inherit;transition:background .32s var(--ease),transform .32s var(--ease)}
 .btn:hover{background:var(--accent-hover)}
-.btn:active{transform:scale(.97)}
+.btn:active{transform:scale(.97);transition:transform .1s ease-out}
 .btn.ghost{background:transparent;color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .btn.ghost:hover{background:var(--accent);color:#fff}
 .link{color:var(--accent);text-decoration:none}
@@ -57,9 +60,7 @@ h3{font-size:clamp(26px,2.8vw,36px);line-height:1.12;letter-spacing:-.01em;font-
 .hero{text-align:center;padding:96px 0 0;overflow:hidden}
 .hero-art{margin:56px auto 0;width:min(820px,92vw);aspect-ratio:16/8;position:relative}
 .hero-art svg{width:100%;height:100%;display:block}
-.gear{transform-origin:center;transform-box:fill-box;animation:spin 18s linear infinite}
-.gear.rev{animation-direction:reverse;animation-duration:12s}
-@keyframes spin{to{transform:rotate(360deg)}}
+.gear{transform-origin:center;transform-box:fill-box;will-change:transform}
 .spark{animation:spark 1.6s var(--ease) infinite}
 @keyframes spark{0%,100%{opacity:.15}50%{opacity:1}}
 
@@ -99,6 +100,9 @@ h3{font-size:clamp(26px,2.8vw,36px);line-height:1.12;letter-spacing:-.01em;font-
 .rail{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding:40px 22px 24px;scrollbar-width:none;
   scroll-padding-left:max(22px,calc((100vw - var(--max))/2 + 22px))}
 .rail::-webkit-scrollbar{display:none}
+.rail.drag{scroll-snap-type:none;cursor:grabbing;user-select:none}
+@media (pointer:fine){.rail{cursor:grab}}
+.rail .card{will-change:transform}
 .rail::before,.rail::after{content:"";flex:0 0 max(0px,calc((100vw - var(--max))/2))}
 .card{flex:0 0 min(360px,80vw);scroll-snap-align:start;background:var(--bg);border-radius:var(--radius);padding:32px;min-height:340px;
   display:flex;flex-direction:column;box-shadow:0 2px 14px rgba(0,0,0,.06);transition:transform .32s var(--ease),box-shadow .32s var(--ease)}
@@ -120,6 +124,8 @@ input,textarea,select{width:100%;font:inherit;color:var(--ink);background:var(--
   padding:14px 16px;transition:border-color .24s ease,background .24s ease}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);background:var(--bg)}
 form .btn{justify-self:center;margin-top:10px;padding:13px 36px}
+input:user-invalid{border-color:#d70015}
+.hint{font-size:12px;color:#d70015;min-height:1em;margin-top:-6px}
 .ok{display:none;text-align:center;font-size:21px;margin-top:20px}
 
 footer{background:var(--bg-alt);color:var(--muted);font-size:12px;padding:28px 0 40px}
@@ -131,8 +137,10 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
 .reveal.d1{transition-delay:.1s}.reveal.d2{transition-delay:.2s}
 
 @media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
-  .reveal{opacity:1;transform:none}
+  *,*::before,*::after{animation:none!important;scroll-behavior:auto!important}
+  .reveal{transform:none;transition:opacity .4s ease}
+  .btn,.card,.tile-art{transition:background .2s ease,opacity .2s ease!important;transform:none!important}
+  .story-steps p{transition:none}
   .story{height:auto}.story-stage{position:relative;height:auto;padding:100px 0 260px}
   .story-steps p{position:relative;opacity:1;transform:none;margin-bottom:18px}
 }
@@ -252,7 +260,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
     <p class="lead reveal d1">Ответим в течение рабочего дня.</p>
     <form id="form" class="reveal d2">
       <label for="f-name">Имя и компания</label><input id="f-name" name="name" required autocomplete="organization">
-      <label for="f-contact">Телефон или e-mail</label><input id="f-contact" name="contact" required>
+      <label for="f-contact">Телефон или e-mail</label><input id="f-contact" name="contact" required aria-describedby="f-contact-hint" pattern="(\+?[0-9 \(\)\-]{10,})|([^@\s]+@[^@\s]+\.[^@\s]+)"><p class="hint" id="f-contact-hint" aria-live="polite"></p>
       <label for="f-kind">Вид работ</label>
       <select id="f-kind" name="kind"><option>Металлообработка ЧПУ</option><option>Лазерная резка и гибка</option><option>3D-печать</option><option>Литьё</option><option>Другое</option></select>
       <label for="f-msg">Описание задачи</label><textarea id="f-msg" name="msg" rows="4" placeholder="Материал, количество, сроки"></textarea>
@@ -306,10 +314,71 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
     onScroll();
   }
 
-  // Carousel buttons
+  // Hero gears follow the scroll (direct manipulation instead of an endless loop)
+  const gears = document.querySelectorAll('.gear');
+  if (!reduce) addEventListener('scroll', () => requestAnimationFrame(() => {
+    const a = scrollY * 0.25;
+    gears[0].style.transform = `rotate(${a}deg)`; gears[1].style.transform = `rotate(${-a * 1.45}deg)`;
+  }), { passive: true });
+
+  // Carousel: 1:1 drag, momentum projection, critically damped spring with velocity handoff, rubber-band
   const rail = document.getElementById('rail');
-  document.querySelectorAll('.rail-nav button').forEach(b => b.addEventListener('click', () =>
-    rail.scrollBy({ left: b.dataset.dir * (rail.querySelector('.card').offsetWidth + 20), behavior: reduce ? 'auto' : 'smooth' })));
+  const cards = [...rail.querySelectorAll('.card')];
+  const maxScroll = () => rail.scrollWidth - rail.clientWidth;
+  const snaps = () => cards.map((c, i) => i === 0 ? 0 : Math.min(maxScroll(), Math.max(0, c.offsetLeft - cards[0].offsetLeft)));
+  const project = (v, d = 0.998) => (v / 1000) * d / (1 - d);           // Apple's projection, v in px/s
+  const rubber = (o, dim, c = 0.55) => (o * dim * c) / (dim + c * Math.abs(o));
+  let spring = null, over = 0;
+  const setOver = o => { over = o; cards.forEach(c => c.style.transform = o ? `translateX(${-o}px)` : ''); };
+  function springTo(target, v0 = 0, response = 0.4) {                    // damping 1.0, starts from live value
+    cancelAnimationFrame(spring);
+    if (reduce) { rail.scrollLeft = target; setOver(0); return; }
+    const w = 2 * Math.PI / response; let x = rail.scrollLeft + over, v = v0, last = performance.now();
+    const step = now => {
+      const dt = Math.min(0.032, (now - last) / 1000); last = now;
+      v += (-w * w * (x - target) - 2 * w * v) * dt; x += v * dt;
+      const m = maxScroll();
+      rail.scrollLeft = Math.min(m, Math.max(0, x)); setOver(x < 0 ? x : x > m ? x - m : 0);
+      if (Math.abs(x - target) < 0.5 && Math.abs(v) < 5) { rail.scrollLeft = target; setOver(0); rail.classList.remove('drag'); return; }
+      spring = requestAnimationFrame(step);
+    };
+    rail.classList.add('drag'); spring = requestAnimationFrame(step);
+  }
+  const nearest = pos => snaps().reduce((a, b) => Math.abs(b - pos) < Math.abs(a - pos) ? b : a);
+  let drag = null;
+  rail.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;              // touch keeps native scroll
+    cancelAnimationFrame(spring);                                          // interruptible: grab mid-flight
+    drag = { x0: e.clientX, s0: rail.scrollLeft + over, hist: [[e.clientX, e.timeStamp]], moved: false, id: e.pointerId };
+  });
+  rail.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x0;
+    if (!drag.moved) { if (Math.abs(dx) < 10) return; drag.moved = true; rail.setPointerCapture(drag.id); rail.classList.add('drag'); }
+    const raw = drag.s0 - dx, m = maxScroll();
+    rail.scrollLeft = Math.min(m, Math.max(0, raw));
+    setOver(raw < 0 ? rubber(raw, rail.clientWidth) : raw > m ? rubber(raw - m, rail.clientWidth) : 0);
+    drag.hist.push([e.clientX, e.timeStamp]); if (drag.hist.length > 5) drag.hist.shift();
+  });
+  const release = e => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    if (!d.moved) { rail.classList.remove('drag'); return; }
+    const [x1, t1] = d.hist[0], [x2, t2] = d.hist[d.hist.length - 1];
+    const v = t2 > t1 ? -(x2 - x1) / (t2 - t1) * 1000 : 0;               // scroll velocity, px/s
+    springTo(nearest(rail.scrollLeft + over + project(v)), v);
+  };
+  rail.addEventListener('pointerup', release); rail.addEventListener('pointercancel', release);
+  rail.addEventListener('click', e => { if (rail.classList.contains('drag')) e.preventDefault(); }, true);
+  document.querySelectorAll('.rail-nav button').forEach(b => b.addEventListener('click', () => {
+    const cur = nearest(rail.scrollLeft), i = snaps().indexOf(cur), s = snaps();
+    springTo(s[Math.min(s.length - 1, Math.max(0, i + +b.dataset.dir))]);
+  }));
+
+  // Inline validation (on blur, not only on submit)
+  const contact = document.getElementById('f-contact'), hint = document.getElementById('f-contact-hint');
+  const check = () => { hint.textContent = contact.value && !contact.validity.valid ? 'Укажите телефон (от 10 цифр) или e-mail' : ''; };
+  contact.addEventListener('blur', check); contact.addEventListener('input', () => hint.textContent && check());
 
   // Demo form
   document.getElementById('form').addEventListener('submit', e => {
