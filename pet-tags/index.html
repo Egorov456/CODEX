@@ -8,6 +8,13 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Mona Vita — соберите адресник в 3D" />
   <meta property="og:description" content="Форма, цвет, шнурок, бусины и гравировка. Цена сразу, ручная работа." />
+  <meta property="og:url" content="https://monavita.ru/" />
+  <meta property="og:image" content="https://monavita.ru/og.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="ru_RU" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="canonical" href="https://monavita.ru/" />
   <meta name="theme-color" content="#ef5f8b" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🐾%3C/text%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -17,8 +24,8 @@
   <link rel="stylesheet" href="css/landing.css" />
   <script type="importmap">
     { "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      "three": "./vendor/three/three.module.min.js",
+      "three/addons/": "./vendor/three/addons/"
     } }
   </script>
 </head>
@@ -67,8 +74,12 @@
         <p class="hero-note">Сделано вручную<br />под каждого питомца</p>
         <p class="hero-side">Никаких безликих жетонов из зоомагазина — только адресник, который хочется надеть, даже если питомец никогда не теряется.</p>
         <div class="hero-left">
-          <p><mark>Яркие адресники,</mark> которые вы соберёте сами — и сразу увидите в 3D</p>
-          <a class="btn primary" href="constructor.html" data-goal="open_constructor">✦ Собрать свой</a>
+          <p class="hero-offer"><mark>Адресники и&nbsp;ошейники-бусы</mark> для собак и кошек. Соберите свой в&nbsp;3D за&nbsp;пару минут — цена видна сразу.</p>
+          <div class="hero-cta">
+            <a class="btn primary" href="constructor.html" data-goal="open_constructor">✦ Собрать свой · <span data-min-price></span></a>
+            <a class="btn ghost" href="#ideas">Готовые идеи</a>
+          </div>
+          <ul class="trust" id="trust"></ul>
           <span class="stage-caption" id="heroCaption" aria-live="polite"></span>
         </div>
       </div>
@@ -86,6 +97,7 @@
     <section class="section" id="ideas">
       <div class="wrap">
         <p class="label">/ Бестселлеры /</p>
+        <div class="filters" id="ideaFilters" role="tablist" aria-label="Фильтр идей"></div>
         <div class="ideas" id="ideas-grid"></div>
       </div>
     </section>
@@ -142,13 +154,34 @@
       </div>
     </section>
 
+    <!-- Как подобрать размер -->
+    <section class="section" id="size">
+      <div class="wrap">
+        <p class="label">/ Как подобрать размер /</p>
+        <div class="sizes">
+          <article><b>Ошейник-бусы</b><p>Измерьте шею питомца мягким сантиметром там, где носится ошейник, и прибавьте ширину двух пальцев. Узлы на ошейнике регулируют длину.</p></article>
+          <article><b>Адресник</b><p>S · 2,5 см — кошкам и маленьким собакам. M · 3 см — средним. L · 3,5 см — крупным породам.</p></article>
+          <article><b>Браслет для вас</b><p>Измерьте запястье и прибавьте 1–2 см, чтобы браслет сидел свободно.</p></article>
+        </div>
+        <p class="note-text">Сомневаетесь — оставьте заявку внизу страницы, мастер поможет с размером.</p>
+      </div>
+    </section>
+
+    <!-- Отзывы (появятся, когда в config.js будут реальные отзывы) -->
+    <section class="section" id="reviews" hidden>
+      <div class="wrap">
+        <p class="label">/ Отзывы /</p>
+        <div class="reviews" id="reviewsList"></div>
+      </div>
+    </section>
+
     <!-- Как заказать -->
     <section class="section" id="how">
       <div class="wrap">
         <p class="label">/ Как заказать /</p>
         <ol class="steps">
           <li><b>Соберите адресник</b><p>Форма, материал, кличка, телефон, шнурок, бусины, стразы — всё в 3D-конструкторе.</p></li>
-          <li><b>Оформите заказ</b><p>Оставьте имя и телефон. Мастер получит макет и свяжется, чтобы подтвердить детали.</p></li>
+          <li><b>Согласуйте макет</b><p>Оставьте имя и телефон. Мастер получит макет, свяжется и уточнит детали до начала работы.</p></li>
           <li><b>Получите адресник</b><p>Изготовление — <span data-days></span>, затем отправка удобной службой доставки.</p></li>
         </ol>
         <p class="note-text">Каждый адресник собирается под ваш заказ — поэтому можно выбрать любую форму, цвет и надпись. Цена считается прямо в конструкторе: у каждой буквы, бусины и детали своя стоимость.</p>
@@ -217,13 +250,14 @@
       <a class="foot-cta" href="constructor.html" data-goal="open_constructor">Собрать адресник →</a>
       <p class="foot-mark" aria-hidden="true" data-brand></p>
       <div class="foot-row">
-        <span class="muted" data-tagline></span>
+        <span class="muted"><span data-tagline></span><span id="seller"></span></span>
         <div class="foot-links" id="footContacts"></div>
         <a href="privacy.html">Политика конфиденциальности</a>
       </div>
     </div>
   </footer>
 
+  <a class="sticky-cta" id="stickyCta" href="constructor.html" data-goal="open_constructor" hidden>✦ Собрать адресник · <span data-min-price></span></a>
   <div class="float-msg" id="floatMsg"></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 

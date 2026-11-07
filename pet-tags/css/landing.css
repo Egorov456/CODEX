@@ -251,3 +251,29 @@ body.landing main { overflow-x: clip; }
   .story-in { grid-template-columns: 1fr 1fr; }
   .story-in .about-text { grid-column: 1 / -1; grid-row: 1; }
 }
+
+/* ---------- UX: первый экран, доверие, фильтры, размеры, отзывы, липкая кнопка ---------- */
+.hero-left { max-width: 34ch; }
+.hero-offer { font-size: 16px !important; }
+.hero-cta { display: flex; gap: 8px; flex-wrap: wrap; }
+.trust { list-style: none; padding: 0; margin: 2px 0 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.filters::-webkit-scrollbar { display: none; }
+.filter { flex: none; border: 1.5px solid var(--line); background: var(--card); border-radius: 999px; padding: 10px 16px; min-height: 44px; font-weight: 700; font-size: 13px; cursor: pointer; }
+.filter[aria-selected='true'] { background: var(--pink); border-color: var(--pink); color: #fff; }
+.sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.sizes article { background: var(--pink-pale); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.sizes b { font-family: var(--display); font-size: 16px; color: var(--pink-ink); }
+.sizes p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.reviews blockquote { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 20px; }
+.reviews p { margin: 0 0 10px; line-height: 1.6; }
+.reviews cite { font-style: normal; font-weight: 700; color: var(--pink-ink); font-size: 13px; }
+.sticky-cta { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); right: 76px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 31;
+  background: var(--pink); color: #fff; text-decoration: none; font-weight: 800; text-align: center; padding: 15px 18px; border-radius: 999px;
+  box-shadow: 0 10px 30px rgba(239, 95, 139, .35); display: none; }
+@media (max-width: 760px) {
+  .sticky-cta:not([hidden]) { display: block; }
+  .sizes, .reviews { grid-template-columns: 1fr; }
+  .hero-cta .btn { flex: 1 1 auto; }
+}

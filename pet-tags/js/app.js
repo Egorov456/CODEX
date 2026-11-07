@@ -352,6 +352,10 @@ function openOrder() {
   if (!st.front.line1.trim()) { toast('Добавьте имя питомца — шаг 3'); return; }
   if (st.cord === 'collar' && !String(st.neck || '').trim()) { toast('Укажите обхват шеи — шаг 5'); return; }
   if (st.extras.includes('bracelet') && !String(st.wrist || '').trim()) { toast('Укажите обхват запястья для браслета — шаг 7'); return; }
+  try {
+    const c = JSON.parse(localStorage.getItem('pettag-customer') || 'null');
+    if (c) for (const [k, v] of Object.entries(c)) { const el = $(`#orderForm [name="${k}"]`); if (el && !el.value && v) el.value = v; }
+  } catch { /* ignore */ }
   $('#orderForm').hidden = false;
   $('#sent').hidden = true;
   dlg.showModal();
@@ -360,6 +364,7 @@ function openOrder() {
 $('#orderForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const f = new FormData(e.target);
+  try { localStorage.setItem('pettag-customer', JSON.stringify({ name: f.get('name'), phone: f.get('phone'), contact: f.get('contact'), delivery: f.get('delivery') })); } catch { /* ignore */ }
   const customer = { name: f.get('name').trim(), phone: f.get('phone').trim(), contact: f.get('contact'), delivery: f.get('delivery').trim() };
   orderId = newOrderId();
   const text = orderText(st, customer, orderId);
@@ -389,6 +394,34 @@ function advice() {
   showSend(text, 'Написать мастеру', 'Ваш макет уже в сообщении — останется задать вопрос.');
 }
 
+// ---------- Быстрый старт и пошаговая сборка ----------
+function applyPreset(p) {
+  st = presetState(p);
+  try { localStorage.setItem(STORE, JSON.stringify(st)); } catch { /* ignore */ }
+  $('#panel').replaceChildren();
+  refreshers.length = 0;
+  buildPanel();
+  enhancePanel();
+  refresh(`Идея «${p.title}» — меняйте что угодно`);
+  scene?.replay();
+}
+
+function enhancePanel() {
+  const P = $('#panel');
+  const strip = h('div', { class: 'quick' }, h('b', {}, 'Быстрый старт — возьмите готовую идею:'),
+    h('div', { class: 'quick-row' }, ...CONFIG.presets.map((p) => h('button', { type: 'button', class: 'chip', onclick: () => applyPreset(p) }, p.title))));
+  P.prepend(strip);
+  // кнопка «Далее» в каждом шаге: закрывает текущий, открывает следующий
+  const steps = [...P.querySelectorAll('details.step')];
+  steps.forEach((d, i) => {
+    const next = steps[i + 1];
+    const btn = next
+      ? h('button', { type: 'button', class: 'btn ghost next', onclick: () => { d.open = false; next.open = true; next.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }, 'Далее →')
+      : h('button', { type: 'button', class: 'btn primary next', onclick: () => openOrder() }, 'Оформить заказ');
+    d.querySelector('.step-body').append(btn);
+  });
+}
+
 // ---------- Запуск ----------
 async function init() {
   initAnalytics();
@@ -397,6 +430,7 @@ async function init() {
   $('#tagline').textContent = CONFIG.tagline;
   document.title = `${CONFIG.brand} — конструктор адресника`;
   buildPanel();
+  enhancePanel();
   refresh();
 
   $('#totalBtn').onclick = () => {
