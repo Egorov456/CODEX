@@ -153,16 +153,24 @@ export const CONFIG = {
     { id: 'blue', name: 'Голубые', color: '#8fd8ff' },
   ],
 
+  // ⚠️ Короткие обещания под первым экраном — оставьте только то, что точно выполняете.
+  promises: ['Ручная работа', 'Макет согласуем до начала работы', 'Доставка по всей России'],
+
+  // Реальные отзывы клиентов: { name: 'Анна и шпиц Бублик', text: '…' }. Пока пусто — блок скрыт.
+  reviews: [],
+
+  // Реквизиты продавца для доверия в подвале, например 'ИП Иванова А. А., ИНН 000000000000'. Пусто — не показываются.
+  seller: '',
+
   // ---------- Готовые идеи на главной (открываются в конструкторе для правки) ----------
   // Поля как в конструкторе; не указанное берётся по умолчанию.
   presets: [
-    { id: 'family', title: 'Фэмили-лук: ошейник + браслет', badge: 'Парные', state: {
-      pet: 'cat', extras: ['breakaway'],
+    { id: 'family', collection: 'oldmoney', title: 'Фэмили-лук: ошейник + браслет', badge: 'Парные', state: {
       shape: 'bone', material: 'enamel', tagColor: '#d8c3a5', rim: 'gold', front: { line1: 'Моника', font: 'Montserrat', textColor: 'black', icon: 'none' },
       cord: 'collar', cordColor: '#7a7d4a', beadLayout: 'sym', extras: ['bracelet'],
       beads: [['silicone', '#c4683f'], ['silicone', '#c4683f'], ['round', '#d8c3a5'], ['round', '#d8c3a5'], ['metal', '#e6b84f'], ['metal', '#e6b84f'],
         ['silicone', '#7a7d4a'], ['silicone', '#7a7d4a'], ['round', '#d8c3a5'], ['round', '#d8c3a5']].map(([type, color]) => ({ type, color })) } },
-    { id: 'oldmoney', title: 'Old Money', badge: 'Новинка', state: {
+    { id: 'oldmoney', collection: 'oldmoney', title: 'Old Money', badge: 'Новинка', state: {
       shape: 'tag', material: 'steel', front: { line1: 'Вита', font: 'Montserrat', icon: 'none' },
       cord: 'collar', cordColor: '#3d3f45', beadLayout: 'sym',
       beads: [['silicone', '#d8c3a5'], ['silicone', '#d8c3a5'], ['silicone', '#c4683f'], ['silicone', '#c4683f'], ['metal', '#d3d6db'], ['metal', '#d3d6db'],
@@ -199,6 +207,7 @@ export const CONFIG = {
       front: { line1: 'Мурка', font: 'Lobster', icon: 'crown' }, cord: 'wax', cordColor: '#e94e77',
       beads: [{ type: 'pearl', color: '#ffffff' }, { type: 'heart', color: '#ff4f81' }, { type: 'pearl', color: '#ffffff' }] } },
     { id: 'kitty', title: 'Котик в горошек', state: {
+      pet: 'cat', extras: ['breakaway'],
       shape: 'flower', material: 'clay', tagColor: '#9a6fb0', pattern: 'dots', topper: 'kitty', topperColor: '#f2c48d',
       front: { line1: 'Ася', font: 'Caveat', textColor: 'white', icon: 'none' }, cord: 'wax', cordColor: '#f5f5f5',
       beads: [{ type: 'daisy', color: '#ffd23f' }, { type: 'daisy', color: '#ffd23f' }, { type: 'pearl', color: '#ffffff' }, { type: 'pearl', color: '#ffffff' }] } },

@@ -5,14 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Mona Vita — конструктор адресника</title>
   <meta name="description" content="Соберите адресник для питомца в 3D: форма, цвет, шнурок, бусины, гравировка — цена считается сразу." />
+  <meta property="og:title" content="Mona Vita — соберите адресник в 3D" />
+  <meta property="og:image" content="https://monavita.ru/og.png" />
+  <link rel="canonical" href="https://monavita.ru/constructor.html" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Comfortaa:wght@700&family=Lobster&family=Montserrat:wght@500;700;800&family=Unbounded:wght@900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <script type="importmap">
     { "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      "three": "./vendor/three/three.module.min.js",
+      "three/addons/": "./vendor/three/addons/"
     } }
   </script>
 </head>
@@ -55,7 +58,11 @@
   <dialog id="dlg">
     <form method="dialog" id="orderForm" class="dlg-body">
       <h2>Оформление заказа</h2>
-      <p class="muted">Мастер свяжется с вами, подтвердит детали и сроки.</p>
+      <ol class="next-steps">
+        <li>Мастер получит макет и свяжется с вами, чтобы согласовать детали.</li>
+        <li>После согласования — оплата и изготовление.</li>
+        <li>Отправка удобной службой доставки.</li>
+      </ol>
       <label>Ваше имя*<input name="name" required maxlength="60" autocomplete="name" /></label>
       <label>Телефон*<input name="phone" required maxlength="30" inputmode="tel" autocomplete="tel" placeholder="+7 …" /></label>
       <label>Как удобнее связаться

@@ -26,6 +26,12 @@ function fillTexts() {
   $$('[data-tagline]').forEach((el) => (el.textContent = CONFIG.tagline));
   $$('[data-days]').forEach((el) => (el.textContent = CONFIG.productionDays));
   $$('[data-min-price]').forEach((el) => (el.textContent = `от ${money(minPrice)}`));
+  $('#trust').innerHTML = (CONFIG.promises || []).map((t) => '<li>✓ ' + esc(t) + '</li>').join('');
+  if (CONFIG.seller) $('#seller').textContent = ' · ' + CONFIG.seller;
+  if ((CONFIG.reviews || []).length) {
+    $('#reviews').hidden = false;
+    $('#reviewsList').innerHTML = CONFIG.reviews.map((r) => '<blockquote><p>' + esc(r.text) + '</p><cite>' + esc(r.name) + '</cite></blockquote>').join('');
+  }
 
   const c = CONFIG.contacts;
   const links = [];
@@ -75,6 +81,28 @@ function shapeSvg(id) {
   const pts = buildShape(id).shape.getPoints(40);
   const d = 'M' + pts.map((p) => `${p.x.toFixed(2)},${(-p.y).toFixed(2)}`).join('L') + 'Z';
   return `<svg viewBox="-1.9 -1.9 3.8 3.8" aria-hidden="true"><path d="${d}" fill="currentColor"/></svg>`;
+}
+
+// фильтр готовых идей: коллекция, тип, питомец
+const FILTERS = [
+  ['all', 'Все', () => true],
+  ['collar', 'Ошейники-бусы', (p) => p.st.cord === 'collar'],
+  ['cat', 'Для кошек', (p) => p.st.pet === 'cat'],
+  ['dog', 'Для собак', (p) => p.st.pet !== 'cat'],
+  ['cute', 'Милые', (p) => p.collection !== 'oldmoney'],
+  ['oldmoney', 'Old Money', (p) => p.collection === 'oldmoney'],
+];
+
+function fillFilters() {
+  const box = $('#ideaFilters');
+  box.innerHTML = FILTERS.map(([id, name], i) => '<button type="button" role="tab" class="filter" data-f="' + id + '" aria-selected="' + (i === 0) + '">' + name + '</button>').join('');
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-f]');
+    if (!b) return;
+    const fn = FILTERS.find((f) => f[0] === b.dataset.f)[2];
+    $$('.filter', box).forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+    $$('.idea').forEach((card) => (card.hidden = !fn(presets.find((p) => p.id === card.dataset.preset))));
+  });
 }
 
 function fillIdeas() {
@@ -245,6 +273,7 @@ initAnalytics();
 fillTexts();
 fillPrices();
 fillIdeas();
+fillFilters();
 fillParts();
 fillFaq();
 initLead();
@@ -252,6 +281,11 @@ document.addEventListener('click', (e) => {
   const g = e.target.closest('[data-goal]');
   if (g) goal(g.dataset.goal);
 });
+// липкая кнопка на телефоне — появляется, когда первый экран ушёл вверх
+const stickyToggle = () => ($('#stickyCta').hidden = scrollY < $('.hero').offsetHeight * 0.6);
+addEventListener('scroll', stickyToggle, { passive: true });
+stickyToggle();
+
 fitMarks();
 document.fonts?.ready.then(fitMarks);
 addEventListener('resize', fitMarks);

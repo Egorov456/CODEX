@@ -18,6 +18,7 @@ cd pet-tags && python3 -m http.server 8000   # http://localhost:8000
 - сроки изготовления, доставка, оплата — ⚠️ проверьте тексты, их видят клиенты;
 - все цены, палитры, лимиты; материалы, узоры (`patterns`), фигурки на адреснике (`toppers`),
   бусины и подвески (`beads`, `group: 'charm'`), ошейник-бусы (`cords`); готовые идеи (`presets`); вопросы-ответы (`faq`);
+- `promises` (обещания под первым экраном), `reviews` (реальные отзывы — пока пусто, блок скрыт), `seller` (реквизиты в подвале);
 - `metrikaId` — номер счётчика Яндекс.Метрики (цели: `open_constructor`, `lead_submit`,
   `order_submit`, `advice_click`, `messenger_click` — создайте их в Метрике как «JavaScript-событие»);
 - `orderEndpoint` — адрес приёма заявок (см. ниже).
