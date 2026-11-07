@@ -1,13 +1,7 @@
-# Лендинг ЦЕХ.pro в дизайн-логике apple.com
+# Разбор apple.com для редизайна monavita.ru
 
-- `PROMPT.md` — промт задачи (переформулирован: принципы и механика анимаций, без копирования контента/бренда Apple).
-- `analyze.js` — Playwright-скрипт: собирает метрики стилей apple.com (типографика, цвета, переходы, nav). Запуск: `node analyze.js <папка-для-вывода>`.
-- `FINDINGS.md` — итоговые метрики и как они перенесены в токены.
-- `index.html` — оригинальный лендинг ЦЕХ.pro: один файл, 0 зависимостей, ~21 КБ.
+- `PROMPT.md` — промт задачи (принципы и механика анимаций, без копирования контента/бренда Apple).
+- `analyze.js` — Playwright-скрипт: собирает метрики стилей apple.com. Запуск: `node analyze.js <папка-для-вывода>`.
+- `FINDINGS.md` — итоговые метрики.
 
-Анимации: reveal при скролле, sticky scrollytelling (3 шага), count-up цифр, шестерни в hero вращаются от скролла,
-carousel с физикой по скиллу apple-design (drag 1:1, проекция инерции, пружина с передачей скорости, rubber-band).
-`prefers-reduced-motion` — мягкие cross-fade; учтены `prefers-reduced-transparency` и `prefers-contrast`.
-
-Открыть локально: `xdg-open apple-style-study/index.html` (или любой статический сервер).
-Цифры в блоке статистики и кейсы — демо, заменить на реальные перед запуском. Форма пока никуда не отправляет.
+Реализация — в `pet-tags/css/apple.css` и `pet-tags/js/motion.js` (подключены в `pet-tags/index.html`).
