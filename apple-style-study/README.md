@@ -5,8 +5,9 @@
 - `FINDINGS.md` — итоговые метрики и как они перенесены в токены.
 - `index.html` — оригинальный лендинг ЦЕХ.pro: один файл, 0 зависимостей, ~21 КБ.
 
-Анимации: reveal при скролле, sticky scrollytelling (3 шага), count-up цифр, карусель кейсов со snap,
-вращение шестерён в hero, hover-масштаб плиток. `prefers-reduced-motion` отключает всё движение.
+Анимации: reveal при скролле, sticky scrollytelling (3 шага), count-up цифр, шестерни в hero вращаются от скролла,
+carousel с физикой по скиллу apple-design (drag 1:1, проекция инерции, пружина с передачей скорости, rubber-band).
+`prefers-reduced-motion` — мягкие cross-fade; учтены `prefers-reduced-transparency` и `prefers-contrast`.
 
 Открыть локально: `xdg-open apple-style-study/index.html` (или любой статический сервер).
 Цифры в блоке статистики и кейсы — демо, заменить на реальные перед запуском. Форма пока никуда не отправляет.

@@ -98,7 +98,7 @@ h3{font-size:clamp(26px,2.8vw,36px);line-height:1.12;letter-spacing:-.01em;font-
 /* Carousel */
 .cases{background:var(--bg-alt);padding:110px 0}
 .rail{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding:40px 22px 24px;scrollbar-width:none;
-  scroll-padding-left:max(22px,calc((100vw - var(--max))/2 + 22px))}
+  scroll-padding-left:calc(max(22px,calc((100vw - var(--max))/2 + 22px)) + 20px)}
 .rail::-webkit-scrollbar{display:none}
 .rail.drag{scroll-snap-type:none;cursor:grabbing;user-select:none}
 @media (pointer:fine){.rail{cursor:grab}}
@@ -325,7 +325,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;
   const rail = document.getElementById('rail');
   const cards = [...rail.querySelectorAll('.card')];
   const maxScroll = () => rail.scrollWidth - rail.clientWidth;
-  const snaps = () => cards.map((c, i) => i === 0 ? 0 : Math.min(maxScroll(), Math.max(0, c.offsetLeft - cards[0].offsetLeft)));
+  const snaps = () => { const pl = parseFloat(getComputedStyle(rail).scrollPaddingLeft) || 0, r0 = rail.getBoundingClientRect().left - rail.scrollLeft;
+    return cards.map(c => Math.round(Math.min(maxScroll(), Math.max(0, c.getBoundingClientRect().left - r0 - pl)))); }; // same points as native scroll-snap
   const project = (v, d = 0.998) => (v / 1000) * d / (1 - d);           // Apple's projection, v in px/s
   const rubber = (o, dim, c = 0.55) => (o * dim * c) / (dim + c * Math.abs(o));
   let spring = null, over = 0;
