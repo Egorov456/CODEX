@@ -1,0 +1,54 @@
+# EspoCRM для заявок Mona Vita. Пароли — в .env рядом (создаёт `bash install.sh crm`).
+# CRM слушает только 127.0.0.1: наружу её открывают через Caddy/nginx с HTTPS (см. README).
+services:
+  db:
+    image: mariadb:11.4
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: espocrm
+      MARIADB_USER: espocrm
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      retries: 10
+    mem_limit: 512m
+
+  espocrm:
+    image: espocrm/espocrm:10.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ESPOCRM_DATABASE_PLATFORM: Mysql
+      ESPOCRM_DATABASE_HOST: db
+      ESPOCRM_DATABASE_USER: espocrm
+      ESPOCRM_DATABASE_PASSWORD: ${DB_PASSWORD}
+      ESPOCRM_ADMIN_USERNAME: admin
+      ESPOCRM_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ESPOCRM_SITE_URL: ${SITE_URL}
+      ESPOCRM_CONFIG_LANGUAGE: ru_RU
+      ESPOCRM_CONFIG_TIME_ZONE: Europe/Moscow
+    volumes:
+      - espocrm:/var/www/html
+    ports:
+      - "127.0.0.1:${CRM_PORT:-8090}:80"
+    mem_limit: 512m
+
+  espocrm-daemon:  # фоновые задачи CRM (напоминания, почта)
+    image: espocrm/espocrm:10.0
+    restart: unless-stopped
+    depends_on:
+      - espocrm
+    volumes:
+      - espocrm:/var/www/html
+    entrypoint: docker-daemon.sh
+    mem_limit: 256m
+
+volumes:
+  db:
+  espocrm:
