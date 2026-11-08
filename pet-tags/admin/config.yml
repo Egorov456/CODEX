@@ -1,0 +1,157 @@
+# Админка сайта Mona Vita (Sveltia CMS). Сохранение = коммит в main → сайт обновится сам за ~5 минут.
+# Если правка сломает данные, установщик её не выложит (deploy/validate_content.py), сайт останется прежним.
+backend:
+  name: github
+  repo: Egorov456/CODEX
+  branch: main
+  commit_messages:
+    update: 'Админка: {{slug}} обновлён'
+locale: ru
+media_folder: pet-tags/img/uploads
+public_folder: /img/uploads
+collections:
+  - name: site
+    label: Сайт
+    files:
+      - name: content
+        label: Цены, тексты и контакты
+        file: pet-tags/content.json
+        format: json
+        fields:
+          - { name: brand, label: "Название", widget: string }
+          - { name: tagline, label: "Подзаголовок", widget: string }
+          - name: contacts
+            label: Контакты мастера
+            widget: object
+            fields:
+              - { name: whatsapp, label: "WhatsApp: номер только цифрами, например 79991234567", widget: string, pattern: ['^[0-9]{10,15}$', 'Только цифры, 10–15 штук'] }
+              - { name: telegram, label: "Telegram: ник без @", widget: string, pattern: ['^[A-Za-z0-9_]{4,32}$', 'Латиница, цифры и _'] }
+              - { name: email, label: Email, widget: string, required: false }
+          - { name: productionDays, label: "Срок изготовления (например «3–5 рабочих дней»)", widget: string }
+          - { name: delivery, label: "Доставка — текст для клиентов", widget: text }
+          - { name: payment, label: "Оплата — текст для клиентов", widget: text }
+          - { name: seller, label: "Реквизиты в подвале (ИП, ИНН) — пусто, чтобы скрыть", widget: string, required: false }
+          - { name: metrikaId, label: "Номер счётчика Яндекс.Метрики (только цифры)", widget: string, required: false }
+          - { name: promises, label: Обещания под первым экраном, widget: list, field: { name: text, label: Обещание, widget: string } }
+          - name: reviews
+            label: Отзывы (пусто — блок скрыт)
+            widget: list
+            required: false
+            summary: '{{name}}'
+            fields:
+              - { name: name, label: "Кто (например «Анна и шпиц Бублик»)", widget: string }
+              - { name: text, label: Текст отзыва, widget: text }
+          - name: faq
+            label: Частые вопросы ({days}, {delivery}, {payment} подставятся из полей выше)
+            widget: list
+            min: 1
+            summary: '{{q}}'
+            fields:
+              - { name: q, label: Вопрос, widget: string }
+              - { name: a, label: Ответ, widget: text }
+          - { name: pricePerFrontChar, label: "Цена за символ на лицевой стороне, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+          - { name: pricePerBackChar, label: "Цена за символ на обороте, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+          - { name: pricePerStrass, label: "Цена одной стразы, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+          - name: catalog
+            label: Цены и названия позиций
+            widget: object
+            fields:
+              - name: shapes
+                label: "Формы адресника"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+              - name: sizes
+                label: "Размеры (доплата)"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+              - name: materials
+                label: "Материалы (доплата)"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+              - name: patterns
+                label: "Узоры (доплата)"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+              - name: toppers
+                label: "Фигурки сверху (доплата)"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+              - name: icons
+                label: "Значки (доплата)"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+              - name: cords
+                label: "Шнурки и ошейники"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+              - name: beads
+                label: "Бусины и подвески (за штуку)"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
+              - name: extras
+                label: "Дополнительно"
+                widget: list
+                allow_add: false
+                allow_remove: false
+                allow_reorder: false
+                summary: '{{name}} — {{price}} ₽'
+                fields:
+                  - { name: id, label: id, widget: hidden }
+                  - { name: name, label: Название, widget: string }
+                  - { name: price, label: "Цена, ₽", widget: number, value_type: int, min: 0, max: 100000 }
