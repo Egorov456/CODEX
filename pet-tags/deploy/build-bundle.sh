@@ -6,6 +6,7 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/site" "$ROOT/dist"
 cp -a "$ROOT"/index.html "$ROOT"/constructor.html "$ROOT"/privacy.html "$ROOT"/robots.txt "$ROOT"/sitemap.xml "$ROOT"/og.png "$ROOT"/css "$ROOT"/js "$ROOT"/vendor "$TMP/site/"
 cp "$ROOT/deploy/install.sh" "$ROOT/deploy/order_server.py" "$ROOT/deploy/autoupdate.sh" "$TMP/"
+cp -a "$ROOT/deploy/crm" "$TMP/"
 V="$(date +%s)"   # метка версии: браузеры не возьмут старые файлы из кэша
 sed -i -E "s#(href=\"css/[a-z]+\.css)\"#\1?v=$V\"#g; s#(src=\"js/[a-z]+\.js)\"#\1?v=$V\"#g" "$TMP"/site/*.html
 sed -i -E "s#(from '\./[a-z]+\.js)'#\1?v=$V'#g; s#import\('\./scene\.js'\)#import('./scene.js?v=$V')#g" "$TMP"/site/js/*.js

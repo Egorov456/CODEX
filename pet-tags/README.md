@@ -32,6 +32,28 @@ cd pet-tags && python3 -m http.server 8000   # http://localhost:8000
 3. В `config.js` укажите `orderEndpoint: '/api/order'`.
 Если сервер недоступен, клиенту автоматически показываются кнопки мессенджеров. От ботов — скрытое поле-ловушка.
 
+## Сервер (VPS): контакты, Telegram и CRM
+Все настройки сохраняются в `/etc/pettags.env` и **переживают автообновление**:
+```bash
+CONTACT_WHATSAPP=79991234567 CONTACT_TELEGRAM=nick \
+TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... bash install.sh install
+```
+Если на сайте остались заглушки (`79990000000`, `your_telegram`), установщик предупредит.
+
+### Заявки в EspoCRM (необязательно)
+Каждая заявка и заказ становятся **лидом** в EspoCRM: имя, телефон, сумма, полный текст заказа и макет PNG (заметкой).
+В Telegram приходит ссылка на карточку. Если CRM недоступна, заявка всё равно уходит в Telegram, и наоборот.
+1. `bash install.sh crm` поднимает EspoCRM 10 в Docker на `127.0.0.1:8090` (пароль admin лежит в `/opt/pettags-crm/.env`).
+   Docker на сервер с VPN установщик **не ставит**: он меняет iptables. Если Docker не установлен, используйте отдельный VPS с `deploy/crm/docker-compose.yml`.
+2. Откройте CRM снаружи по HTTPS, например в Caddy: `crm.monavita.ru { reverse_proxy 127.0.0.1:8090 }`.
+3. В CRM: Администрирование → Роли → роль «Сайт» (Лиды: создание и чтение; Заметки и Вложения: создание) →
+   API-пользователи → создать с этой ролью, способ «API Key», скопировать ключ.
+4. Настройте статусы лида под воронку: Администрирование → Менеджер сущностей → Лид → поле «Статус»
+   (Новая → Связались → Макет согласован → Оплачено → В работе → Отправлено → Получено / Отказ).
+5. `ESPO_URL=http://127.0.0.1:8090 ESPO_PUBLIC_URL=https://crm.monavita.ru ESPO_API_KEY=... bash install.sh install`
+
+Тесты приёма заявок: `python3 -m unittest deploy/test_order_server.py`. CRM поддерживается только в VPS-варианте (`deploy/order_server.py`), а не в `api/order.js` для Vercel.
+
 ## Структура
 - `js/landing.js` — главная; `js/app.js` — конструктор; `js/scene.js` — 3D-сцена (витрина, превью, конструктор);
 - `js/shapes.js` — формы; `js/pricing.js` — цены и тексты заказа; `js/send.js` — отправка и аналитика;

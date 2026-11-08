@@ -182,7 +182,7 @@ function initLead() {
     const btn = form.querySelector('[type=submit]');
     btn.disabled = true;
     btn.textContent = 'Отправляем…';
-    const ok = f.get('website') ? true : await postToMaster({ kind: 'lead', id, text });
+    const ok = f.get('website') ? true : await postToMaster({ kind: 'lead', id, text, customer: { name, phone } });
     btn.disabled = false;
     btn.textContent = 'Получить консультацию';
 

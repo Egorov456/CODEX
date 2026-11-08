@@ -374,7 +374,7 @@ $('#orderForm').addEventListener('submit', async (e) => {
   if (CONFIG.orderEndpoint) {
     const btn = e.target.querySelector('[type=submit]');
     btn.disabled = true; btn.textContent = 'Отправляем…';
-    const ok = await postToMaster({ kind: 'order', id: orderId, text, image: photo() });
+    const ok = await postToMaster({ kind: 'order', id: orderId, text, image: photo(), customer: { name: customer.name, phone: customer.phone }, total });
     btn.disabled = false; btn.textContent = 'Отправить заказ';
     if (ok) {
       showSend(text, `Заказ ${orderId} отправлен! 🎉`, 'Мастер уже получил заказ и скоро свяжется с вами. Копия заказа ниже.');

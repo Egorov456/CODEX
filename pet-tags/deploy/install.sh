@@ -5,6 +5,10 @@
 #   bash install.sh install            — установка (порт выбирается сам: 80, если свободен, иначе 8080+)
 #   PORT=8080 bash install.sh install  — установка на конкретный порт
 #   TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... bash install.sh install — плюс заявки в Telegram
+#   CONTACT_WHATSAPP=79991234567 CONTACT_TELEGRAM=nick bash install.sh install — контакты мастера на сайте
+#   ESPO_URL=http://127.0.0.1:8090 ESPO_API_KEY=... bash install.sh install — плюс заявки лидами в EspoCRM
+#   bash install.sh crm                — поднять EspoCRM в Docker (только если Docker уже стоит)
+#   Все эти настройки сохраняются в /etc/pettags.env и переживают автообновление.
 #   bash install.sh uninstall          — удалить сайт (VPN не затрагивается)
 #
 # Что скрипт НИКОГДА не делает: не занимает порт 443 и порты, которые уже слушаются; не трогает iptables/nftables,
@@ -46,6 +50,35 @@ nginx_apply() {  # применить конфиг nginx мягко: reload, е�
     if systemctl is-active --quiet nginx; then systemctl reload nginx; else systemctl enable --now nginx >/dev/null 2>&1; fi
   else
     if pgrep -x nginx >/dev/null; then nginx -s reload; else nginx; fi
+  fi
+}
+ENV_FILE=/etc/pettags.env
+ENV_KEYS="TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID CONTACT_WHATSAPP CONTACT_TELEGRAM ESPO_URL ESPO_PUBLIC_URL ESPO_API_KEY"
+load_env() {  # значения из окружения важнее сохранённых в /etc/pettags.env
+  local k; declare -A given=()
+  for k in $ENV_KEYS; do [ -n "${!k:-}" ] && given[$k]="${!k}"; done
+  if [ -f "$ENV_FILE" ]; then set -a; . "$ENV_FILE"; set +a; fi
+  for k in "${!given[@]}"; do printf -v "$k" '%s' "${given[$k]}"; export "$k"; done
+}
+save_env() {
+  local k; umask 077; : > "$ENV_FILE"
+  for k in $ENV_KEYS; do [ -n "${!k:-}" ] && printf '%s=%s\n' "$k" "${!k}" >> "$ENV_FILE"; done
+  umask 022
+}
+apply_contacts() {  # подставить реальные контакты мастера в config.js сайта
+  local cfg="$WEB/js/config.js"
+  if [ -n "${CONTACT_WHATSAPP:-}" ]; then
+    CONTACT_WHATSAPP="$(printf '%s' "$CONTACT_WHATSAPP" | tr -cd '0-9')"
+    [ "${#CONTACT_WHATSAPP}" -ge 10 ] || die "CONTACT_WHATSAPP: нужен номер из 10–15 цифр, например 79991234567"
+    sed -i "s#whatsapp: '[^']*'#whatsapp: '$CONTACT_WHATSAPP'#" "$cfg"
+  fi
+  if [ -n "${CONTACT_TELEGRAM:-}" ]; then
+    CONTACT_TELEGRAM="${CONTACT_TELEGRAM#@}"
+    [[ "$CONTACT_TELEGRAM" =~ ^[A-Za-z0-9_]{4,32}$ ]] || die "CONTACT_TELEGRAM: ник Telegram без @ (латиница, цифры, _)"
+    sed -i "s#telegram: '[^']*'#telegram: '$CONTACT_TELEGRAM'#" "$cfg"
+  fi
+  if grep -qE "79990000000|your_telegram" "$cfg"; then
+    warn "На сайте стоят контакты-заглушки! Клиенты пишут в никуда. Задайте CONTACT_WHATSAPP и CONTACT_TELEGRAM"
   fi
 }
 public_ip() { curl -4 -s --max-time 5 https://api.ipify.org || hostname -I | awk '{print $1}'; }
@@ -131,19 +164,21 @@ EOF
 }
 
 setup_bot() {
-  if [ -z "${TELEGRAM_BOT_TOKEN:-}" ] && [ -f /etc/pettags.env ]; then set -a; . /etc/pettags.env; set +a; fi
-  [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] || { warn "Токен бота не задан — заявки клиенты будут отправлять через мессенджеры сами"; return 0; }
+  local tg=0 crm=0
+  [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] && tg=1
+  [ -n "${ESPO_URL:-}" ] && [ -n "${ESPO_API_KEY:-}" ] && crm=1
+  [ "$tg$crm" != 00 ] || { warn "Ни Telegram-бот, ни CRM не заданы — заявки клиенты будут отправлять через мессенджеры сами"; return 0; }
+  [ "$tg" = 1 ] || warn "Telegram-бот не задан — заявки будут только в CRM, без уведомлений"
   has_systemd || { warn "Нет systemd — приём заявок не установлен"; return 0; }
   command -v python3 >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null
   port_busy "$API_PORT" && ! systemctl is-active --quiet pettags-orders && die "Порт $API_PORT занят — приём заявок не установлен"
   install -d -m 755 "$OPT"; install -m 755 "$HERE/order_server.py" "$OPT/order_server.py"
-  umask 077; printf 'TELEGRAM_BOT_TOKEN=%s\nTELEGRAM_CHAT_ID=%s\n' "$TELEGRAM_BOT_TOKEN" "$TELEGRAM_CHAT_ID" > /etc/pettags.env; umask 022
   cat > /etc/systemd/system/pettags-orders.service <<EOF
 [Unit]
-Description=Приём заявок с сайта адресников в Telegram
+Description=Приём заявок с сайта адресников (Telegram, EspoCRM)
 After=network-online.target
 [Service]
-EnvironmentFile=/etc/pettags.env
+EnvironmentFile=$ENV_FILE
 Environment=PORT=$API_PORT
 ExecStart=/usr/bin/python3 $OPT/order_server.py
 DynamicUser=yes
@@ -160,10 +195,11 @@ EOF
   systemctl enable --now pettags-orders >/dev/null 2>&1
   systemctl restart pettags-orders
   sed -i "s#orderEndpoint: '[^']*'#orderEndpoint: '/api/order'#" "$WEB/js/config.js"
-  [ -n "${PETTAGS_QUIET:-}" ] && { ok "Приём заявок в Telegram работает"; return 0; }
+  [ "$crm" = 1 ] && ok "Заявки будут заводиться лидами в EspoCRM ($ESPO_URL)"
+  [ -n "${PETTAGS_QUIET:-}" ] || [ "$tg" = 0 ] && { ok "Приём заявок работает"; return 0; }
   sleep 1
   if curl -s --max-time 25 -X POST -H 'Content-Type: application/json' \
-      -d '{"id":"test","text":"✅ Сайт адресников подключён. Сюда будут приходить заявки и заказы."}' \
+      -d '{"kind":"test","id":"test","text":"✅ Сайт адресников подключён. Сюда будут приходить заявки и заказы."}' \
       "http://127.0.0.1:$API_PORT/" | grep -q '"ok": true'; then
     ok "Тестовое сообщение отправлено в Telegram — проверьте чат"
   else
@@ -187,6 +223,7 @@ case "$MODE" in
     [ -d "$WEB" ] && cp -a "$WEB" "$WEB.bak-$(date +%s)"
     ls -1dt "$WEB".bak-* 2>/dev/null | tail -n +4 | while read -r old; do rm -rf -- "$old"; done
     install -d "$WEB"; cp -a "$SITE_SRC/." "$WEB/"; rm -rf "$WEB/api" "$WEB/deploy"
+    load_env; apply_contacts; save_env
     chown -R root:root "$WEB"; find "$WEB" -type d -exec chmod 755 {} +; find "$WEB" -type f -exec chmod 644 {} +
     [ -f "$NGX_CONF" ] && cp "$NGX_CONF" "$NGX_CONF.bak"
     write_nginx_conf "$SITE_PORT"
@@ -208,6 +245,26 @@ case "$MODE" in
     check_vpn_after "$VPN_BEFORE" || true
     echo; ok "Готово: http://$(public_ip):$SITE_PORT/"
     say "Если страница не открывается снаружи — у хостинга может быть свой фаервол: откройте TCP $SITE_PORT в панели."
+    ;;
+  crm)
+    command -v docker >/dev/null && docker compose version >/dev/null 2>&1 || die "Docker с compose не найден. Ставить Docker сюда не буду: он меняет iptables (политика FORWARD → DROP) и может сломать VPN. Поднимите CRM на отдельном VPS по deploy/crm/docker-compose.yml"
+    CRM_DIR=/opt/pettags-crm; CRM_ENV="$CRM_DIR/.env"; CRM_PORT="${CRM_PORT:-8090}"
+    install -d -m 700 "$CRM_DIR"; install -m 644 "$HERE/crm/docker-compose.yml" "$CRM_DIR/docker-compose.yml"
+    if [ ! -f "$CRM_ENV" ]; then
+      port_busy "$CRM_PORT" && die "Порт $CRM_PORT занят — задайте другой: CRM_PORT=8091 bash ${PETTAGS_CMD:-$0} crm"
+      gen() { head -c 32 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24; }
+      umask 077
+      printf 'CRM_PORT=%s\nDB_ROOT_PASSWORD=%s\nDB_PASSWORD=%s\nADMIN_PASSWORD=%s\nSITE_URL=%s\n' \
+        "$CRM_PORT" "$(gen)" "$(gen)" "$(gen)" "${ESPO_PUBLIC_URL:-http://127.0.0.1:$CRM_PORT}" > "$CRM_ENV"
+      umask 022
+    fi
+    PORTS_BEFORE="$(listening)"; VPN_BEFORE="$(vpn_snapshot)"
+    (cd "$CRM_DIR" && docker compose up -d)
+    check_ports_after "$PORTS_BEFORE" || true
+    check_vpn_after "$VPN_BEFORE" || true
+    . "$CRM_ENV"
+    ok "EspoCRM запускается на 127.0.0.1:$CRM_PORT (первый старт 1–2 минуты). Логин admin, пароль: grep ADMIN_PASSWORD $CRM_ENV"
+    say "Дальше: создайте API-пользователя в CRM и выполните ESPO_URL=http://127.0.0.1:$CRM_PORT ESPO_API_KEY=… bash ${PETTAGS_CMD:-$0} install (см. README)"
     ;;
   autoupdate)
     has_systemd || die "Нужен systemd"
@@ -253,12 +310,12 @@ EOF
       systemctl disable --now pettags-orders >/dev/null 2>&1 || true
       rm -f /etc/systemd/system/pettags-orders.service; systemctl daemon-reload
     fi
-    rm -f /etc/pettags.env
+    rm -f "$ENV_FILE"
     rm -f "$NGX_CONF" "$NGX_CONF.bak"
     if nginx -t >/dev/null 2>&1 && pgrep -x nginx >/dev/null; then nginx -s reload || true; fi
     rm -rf "$WEB" "$OPT" "$STATE"
     ok "Сайт удалён (nginx и VPN оставлены как есть)"
     check_vpn_after "$VPN_BEFORE" || true
     ;;
-  *) die "Режим: check | install | autoupdate [ветка] | autoupdate-off | uninstall" ;;
+  *) die "Режим: check | install | crm | autoupdate [ветка] | autoupdate-off | uninstall" ;;
 esac
