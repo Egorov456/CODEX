@@ -7,6 +7,12 @@
   <title>Mona Vita — управление сайтом</title>
 </head>
 <body>
+  <script>
+    // CMS работает только по HTTPS: с http://…:8080/admin/ переводим на https://<домен>/admin/
+    if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+      location.replace('https://' + location.hostname + location.pathname + location.hash);
+    }
+  </script>
   <!-- Sveltia CMS: версия закреплена и проверяется по хешу (в браузере хранится токен с правом записи в репозиторий) -->
   <script src="https://unpkg.com/@sveltia/cms@0.249.1/dist/sveltia-cms.js"
     integrity="sha384-VhZk/YeX34ZYE+93UVhm08o5GOb4MUn5knQmsTNyyFuUxmlBju1CRVvTP886DH3u" crossorigin="anonymous"></script>
