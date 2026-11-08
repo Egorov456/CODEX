@@ -1,78 +1,59 @@
 // =====================================================================
-//  НАСТРОЙКИ МАСТЕРСКОЙ — меняйте цены, контакты и ассортимент здесь.
-//  Всё остальное подхватится автоматически.
+//  ТЕХНИЧЕСКИЕ НАСТРОЙКИ: id, цвета, 3D-параметры, готовые идеи.
+//  Цены, названия, тексты, контакты и FAQ — в /content.json (правятся в админке /admin).
 // =====================================================================
 
-export const CONFIG = {
-  brand: 'Mona Vita',
-  tagline: 'Адресники и ошейники ручной работы',
-  currency: '₽',
-
-  // Контакты мастера (без «+», только цифры для WhatsApp; ник Telegram без @)
-  contacts: {
-    whatsapp: '79990000000',
-    telegram: 'your_telegram',
-    email: '',
-  },
-
+const BASE = {
   // Адрес серверной функции приёма заказов и заявок (см. README → «Заявки в Telegram»).
   // Пусто — клиент отправляет заказ/заявку через WhatsApp/Telegram вручную.
   orderEndpoint: '',
-
-  // Яндекс.Метрика: номер счётчика (только цифры). Пусто — аналитика выключена.
-  metrikaId: '',
-
-  // ⚠️ Проверьте и поправьте под свои реальные условия — эти тексты видят клиенты.
-  productionDays: '3–5 рабочих дней',
-  delivery: 'Отправляем по всей России Почтой, СДЭК или Ozon — стоимость по тарифу службы доставки.',
-  payment: 'После того как мастер подтвердит макет: переводом по СБП или на карту.',
 
   limits: { frontLine: 12, frontLine2: 18, backLine: 18, beads: 24 },
 
   // ---------- Форма адресника: базовая цена ----------
   shapes: [
-    { id: 'circle', name: 'Кружочек', price: 450 },
-    { id: 'bone', name: 'Косточка', price: 500 },
-    { id: 'heart', name: 'Сердечко', price: 500 },
-    { id: 'flower', name: 'Цветочек', price: 550 },
-    { id: 'star', name: 'Звёздочка', price: 550 },
-    { id: 'fish', name: 'Рыбка', price: 550 },
-    { id: 'tag', name: 'Жетон', price: 450 },
+    { id: 'circle' },
+    { id: 'bone' },
+    { id: 'heart' },
+    { id: 'flower' },
+    { id: 'star' },
+    { id: 'fish' },
+    { id: 'tag' },
   ],
 
   sizes: [
-    { id: 'S', name: 'S · 2,5 см', scale: 0.85, price: 0 },
-    { id: 'M', name: 'M · 3 см', scale: 1, price: 100 },
-    { id: 'L', name: 'L · 3,5 см', scale: 1.15, price: 200 },
+    { id: 'S', scale: 0.85 },
+    { id: 'M', scale: 1 },
+    { id: 'L', scale: 1.15 },
   ],
 
   // kind: metal — металл целиком; enamel — цветная эмаль с металлическим бортиком; acrylic — цветной акрил
   materials: [
-    { id: 'steel', name: 'Сталь', kind: 'metal', color: '#c9ccd1', price: 0 },
-    { id: 'gold', name: 'Золото', kind: 'metal', color: '#e6b84f', price: 250 },
-    { id: 'rose', name: 'Розовое золото', kind: 'metal', color: '#e7a98f', price: 250 },
-    { id: 'enamel', name: 'Эмаль', kind: 'enamel', price: 200 },
-    { id: 'acrylic', name: 'Акрил', kind: 'acrylic', price: 100 },
-    { id: 'clay', name: 'Полимерная глина', kind: 'clay', price: 150 },
-    { id: 'epoxy', name: 'Эпоксидная смола', kind: 'epoxy', price: 250 },
+    { id: 'steel', kind: 'metal', color: '#c9ccd1' },
+    { id: 'gold', kind: 'metal', color: '#e6b84f' },
+    { id: 'rose', kind: 'metal', color: '#e7a98f' },
+    { id: 'enamel', kind: 'enamel' },
+    { id: 'acrylic', kind: 'acrylic' },
+    { id: 'clay', kind: 'clay' },
+    { id: 'epoxy', kind: 'epoxy' },
   ],
 
   // Узор лицевой и обратной стороны (для всех материалов, кроме металла)
   patterns: [
-    { id: 'none', name: 'Однотонный', price: 0 },
-    { id: 'stripes', name: 'Полоски', price: 100 },
-    { id: 'dots', name: 'Горошек', price: 100 },
-    { id: 'leopard', name: 'Леопард', price: 150 },
-    { id: 'marble', name: 'Мрамор', price: 150 },
-    { id: 'goldleaf', name: 'Поталь (золото)', price: 200 },
+    { id: 'none' },
+    { id: 'stripes' },
+    { id: 'dots' },
+    { id: 'leopard' },
+    { id: 'marble' },
+    { id: 'goldleaf' },
   ],
 
   // Объёмная фигурка поверх адресника
   toppers: [
-    { id: 'none', name: 'Без фигурки', price: 0 },
-    { id: 'teddy', name: 'Мордочка пёсика', price: 250 },
-    { id: 'kitty', name: 'Мордочка котика', price: 250 },
-    { id: 'bow', name: 'Бантик', price: 150 },
+    { id: 'none' },
+    { id: 'teddy' },
+    { id: 'kitty' },
+    { id: 'bow' },
   ],
   topperColors: ['#d9b38c', '#c8956a', '#f2c48d', '#ffffff', '#f28bb0', '#2d2d3a', '#d3d6db'],
 
@@ -83,8 +64,6 @@ export const CONFIG = {
   ],
 
   // ---------- Надписи ----------
-  pricePerFrontChar: 25, // за каждый символ на лицевой стороне (пробелы бесплатно)
-  pricePerBackChar: 15, // за каждый символ на обороте
   fonts: [
     { id: 'Montserrat', name: 'Строгий', css: '700 {s}px Montserrat' },
     { id: 'Comfortaa', name: 'Мягкий', css: '700 {s}px Comfortaa' },
@@ -99,21 +78,21 @@ export const CONFIG = {
   ],
 
   icons: [
-    { id: 'none', name: 'Без значка', price: 0 },
-    { id: 'paw', name: 'Лапка', price: 100 },
-    { id: 'heart', name: 'Сердце', price: 100 },
-    { id: 'bone', name: 'Косточка', price: 100 },
-    { id: 'star', name: 'Звезда', price: 100 },
-    { id: 'crown', name: 'Корона', price: 100 },
+    { id: 'none' },
+    { id: 'paw' },
+    { id: 'heart' },
+    { id: 'bone' },
+    { id: 'star' },
+    { id: 'crown' },
   ],
 
   // ---------- Шнурок ----------
   cords: [
-    { id: 'none', name: 'Только колечко', price: 0 },
-    { id: 'wax', name: 'Вощёный шнур', price: 120, radius: 0.055 },
-    { id: 'paracord', name: 'Паракорд', price: 180, radius: 0.085 },
-    { id: 'chain', name: 'Цепочка', price: 300 },
-    { id: 'collar', name: 'Ошейник-бусы', price: 450, radius: 0.11 },
+    { id: 'none' },
+    { id: 'wax', radius: 0.055 },
+    { id: 'paracord', radius: 0.085 },
+    { id: 'chain' },
+    { id: 'collar', radius: 0.11 },
   ],
   cordColors: ['#7a7d4a', '#c4683f', '#3d3f45', '#d62839', '#8a9a2b', '#6b4226', '#d8c3a5', '#e94e77', '#ff8c42', '#ffd23f', '#3bb273', '#2e86de', '#6c5ce7', '#8d6e63', '#1e1e24', '#f5f5f5'],
   chainColors: [
@@ -124,43 +103,33 @@ export const CONFIG = {
   // ---------- Бусины ----------
   // group: bead — бусина на шнурке, charm — подвеска-фигурка; letter: true — с буквой/цифрой
   beads: [
-    { id: 'round', name: 'Круглая', price: 40, group: 'bead' },
-    { id: 'facet', name: 'Гранёная', price: 60, group: 'bead' },
-    { id: 'pearl', name: 'Жемчуг', price: 70, group: 'bead' },
-    { id: 'metal', name: 'Металлик', price: 50, group: 'bead' },
-    { id: 'heart', name: 'Сердечко', price: 80, group: 'bead' },
-    { id: 'star', name: 'Звёздочка', price: 80, group: 'bead' },
-    { id: 'silicone', name: 'Силиконовая матовая', price: 50, group: 'bead', color: '#c4683f' },
-    { id: 'daisy', name: 'Цветочек', price: 70, group: 'bead', color: '#ffd23f' },
-    { id: 'tennis', name: 'Мячик', price: 80, group: 'bead', color: '#cde34a' },
-    { id: 'letter', name: 'Буква-кубик', price: 60, group: 'bead', letter: true, color: '#ffffff' },
-    { id: 'disc', name: 'Буква-кругляш', price: 50, group: 'bead', letter: true, color: '#ffffff' },
-    { id: 'ch-strawberry', name: 'Клубничка', price: 180, group: 'charm', color: '#e0283a' },
-    { id: 'ch-croissant', name: 'Круассан', price: 200, group: 'charm' },
-    { id: 'ch-teddy', name: 'Пёсик', price: 250, group: 'charm', color: '#c8956a' },
-    { id: 'ch-kitty', name: 'Котик', price: 250, group: 'charm', color: '#f2c48d' },
-    { id: 'ch-bow', name: 'Бантик', price: 150, group: 'charm', color: '#d3d6db' },
-    { id: 'ch-duck', name: 'Уточка', price: 180, group: 'charm', color: '#ffd23f' },
+    { id: 'round', group: 'bead' },
+    { id: 'facet', group: 'bead' },
+    { id: 'pearl', group: 'bead' },
+    { id: 'metal', group: 'bead' },
+    { id: 'heart', group: 'bead' },
+    { id: 'star', group: 'bead' },
+    { id: 'silicone', group: 'bead', color: '#c4683f' },
+    { id: 'daisy', group: 'bead', color: '#ffd23f' },
+    { id: 'tennis', group: 'bead', color: '#cde34a' },
+    { id: 'letter', group: 'bead', letter: true, color: '#ffffff' },
+    { id: 'disc', group: 'bead', letter: true, color: '#ffffff' },
+    { id: 'ch-strawberry', group: 'charm', color: '#e0283a' },
+    { id: 'ch-croissant', group: 'charm' },
+    { id: 'ch-teddy', group: 'charm', color: '#c8956a' },
+    { id: 'ch-kitty', group: 'charm', color: '#f2c48d' },
+    { id: 'ch-bow', group: 'charm', color: '#d3d6db' },
+    { id: 'ch-duck', group: 'charm', color: '#ffd23f' },
   ],
   beadColors: ['#7a7d4a', '#c4683f', '#3d3f45', '#d8c3a5', '#d62839', '#c8956a', '#f4ecd8', '#cde34a', '#6b4226', '#ff4f81', '#ff9f43', '#feca57', '#1dd1a1', '#48dbfb', '#2e86de', '#a29bfe', '#ffffff', '#222f3e', '#f8c8dc'],
 
   // ---------- Стразы ----------
-  pricePerStrass: 20,
   strassCounts: [0, 6, 10, 16],
   strassColors: [
     { id: 'clear', name: 'Прозрачные', color: '#f4fbff' },
     { id: 'pink', name: 'Розовые', color: '#ff8fc7' },
     { id: 'blue', name: 'Голубые', color: '#8fd8ff' },
   ],
-
-  // ⚠️ Короткие обещания под первым экраном — оставьте только то, что точно выполняете.
-  promises: ['Ручная работа', 'Макет согласуем до начала работы', 'Доставка по всей России'],
-
-  // Реальные отзывы клиентов: { name: 'Анна и шпиц Бублик', text: '…' }. Пока пусто — блок скрыт.
-  reviews: [],
-
-  // Реквизиты продавца для доверия в подвале, например 'ИП Иванова А. А., ИНН 000000000000'. Пусто — не показываются.
-  seller: '',
 
   // ---------- Готовые идеи на главной (открываются в конструкторе для правки) ----------
   // Поля как в конструкторе; не указанное берётся по умолчанию.
@@ -213,24 +182,52 @@ export const CONFIG = {
       beads: [{ type: 'daisy', color: '#ffd23f' }, { type: 'daisy', color: '#ffd23f' }, { type: 'pearl', color: '#ffffff' }, { type: 'pearl', color: '#ffffff' }] } },
   ],
 
-  // ---------- Частые вопросы на главной ----------
-  // {days}, {delivery}, {payment} подставляются из настроек выше.
-  faq: [
-    ['Сколько делается адресник?', 'Обычно {days}. Если нужно быстрее — выберите «Срочно» в конструкторе, сделаем за 1–2 дня.'],
-    ['Цена в конструкторе окончательная?', 'Да, это стоимость самого адресника со всеми выбранными деталями. Доставка оплачивается отдельно.'],
-    ['Как вы доставляете?', '{delivery}'],
-    ['Как оплатить?', '{payment}'],
-    ['Можно поменять макет после заказа?', 'Да. Перед началом работы мастер связывается с вами, и все детали можно поправить.'],
-    ['Можно сделать по моей идее?', 'Конечно. Опишите её в комментарии к заказу или оставьте заявку — мастер подскажет, как лучше воплотить.'],
-  ],
-
   // ---------- Дополнительно ----------
   extras: [
-    { id: 'bracelet', name: 'Парный браслет для хозяина', price: 690 },
-    { id: 'nfc', name: 'NFC-метка: контакты касанием телефона', price: 290 },
-    { id: 'steel', name: 'Стальной тросик внутри шнура', price: 250, only: 'dog' },
-    { id: 'breakaway', name: 'Безопасная застёжка (расстёгивается при рывке)', price: 150, only: 'cat' },
-    { id: 'box', name: 'Подарочная коробочка', price: 150 },
-    { id: 'urgent', name: 'Срочно — за 1–2 дня', price: 300 },
+    { id: 'bracelet' },
+    { id: 'nfc' },
+    { id: 'steel', only: 'dog' },
+    { id: 'breakaway', only: 'cat' },
+    { id: 'box' },
+    { id: 'urgent' },
   ],
 };
+
+// ---------- Контент из админки (/content.json) ----------
+// Названия и цены позиций подставляются по id; неизвестные id игнорируются, у пропущенных остаются только тех. поля.
+export function applyContent(base, content) {
+  const c = content && typeof content === 'object' ? content : {};
+  const out = { ...base, currency: '₽', contacts: { whatsapp: '', telegram: '', email: '' },
+    promises: [], reviews: [], seller: '', faq: [], pricePerFrontChar: 0, pricePerBackChar: 0, pricePerStrass: 0 };
+  for (const k of ['brand', 'tagline', 'metrikaId', 'productionDays', 'delivery', 'payment', 'seller']) {
+    if (typeof c[k] === 'string') out[k] = c[k];
+  }
+  for (const k of ['pricePerFrontChar', 'pricePerBackChar', 'pricePerStrass']) {
+    if (Number.isFinite(c[k]) && c[k] >= 0) out[k] = c[k];
+  }
+  if (c.contacts && typeof c.contacts === 'object') out.contacts = { ...out.contacts, ...c.contacts };
+  if (Array.isArray(c.promises)) out.promises = c.promises.filter((x) => typeof x === 'string' && x.trim());
+  if (Array.isArray(c.reviews)) out.reviews = c.reviews.filter((r) => r && r.name && r.text);
+  if (Array.isArray(c.faq)) out.faq = c.faq.filter((f) => f && f.q && f.a).map((f) => [f.q, f.a]);
+  for (const [k, list] of Object.entries(base)) {
+    if (!Array.isArray(list) || !list.length || typeof list[0] !== 'object' || !('id' in list[0])) continue;
+    const items = Array.isArray(c.catalog?.[k]) ? c.catalog[k] : null;
+    if (!items) continue;
+    const byId = new Map(items.filter((x) => x && x.id).map((x) => [x.id, x]));
+    out[k] = list.map((it) => {
+      const x = byId.get(it.id) || {};
+      return { ...it, name: String(x.name || it.name || it.id), price: Number.isFinite(x.price) && x.price >= 0 ? x.price : 0 };
+    });
+  }
+  return out;
+}
+
+async function loadContent() {
+  try {
+    const r = await fetch(new URL('../content.json', import.meta.url), { cache: 'no-cache' });
+    if (r.ok) return await r.json();
+  } catch { /* без контента сайт покажет тех. значения */ }
+  return {};
+}
+
+export const CONFIG = applyContent(BASE, typeof window === 'undefined' ? {} : await loadContent());

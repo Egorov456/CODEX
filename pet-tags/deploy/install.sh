@@ -65,20 +65,29 @@ save_env() {
   for k in $ENV_KEYS; do [ -n "${!k:-}" ] && printf '%s=%s\n' "$k" "${!k}" >> "$ENV_FILE"; done
   umask 022
 }
-apply_contacts() {  # подставить реальные контакты мастера в config.js сайта
-  local cfg="$WEB/js/config.js"
+apply_contacts() {  # подставить реальные контакты мастера в content.json сайта (перекрывают значения из админки)
+  local f="$WEB/content.json"
   if [ -n "${CONTACT_WHATSAPP:-}" ]; then
     CONTACT_WHATSAPP="$(printf '%s' "$CONTACT_WHATSAPP" | tr -cd '0-9')"
     [ "${#CONTACT_WHATSAPP}" -ge 10 ] || die "CONTACT_WHATSAPP: нужен номер из 10–15 цифр, например 79991234567"
-    sed -i "s#whatsapp: '[^']*'#whatsapp: '$CONTACT_WHATSAPP'#" "$cfg"
   fi
   if [ -n "${CONTACT_TELEGRAM:-}" ]; then
     CONTACT_TELEGRAM="${CONTACT_TELEGRAM#@}"
     [[ "$CONTACT_TELEGRAM" =~ ^[A-Za-z0-9_]{4,32}$ ]] || die "CONTACT_TELEGRAM: ник Telegram без @ (латиница, цифры, _)"
-    sed -i "s#telegram: '[^']*'#telegram: '$CONTACT_TELEGRAM'#" "$cfg"
   fi
-  if grep -qE "79990000000|your_telegram" "$cfg"; then
-    warn "На сайте стоят контакты-заглушки! Клиенты пишут в никуда. Задайте CONTACT_WHATSAPP и CONTACT_TELEGRAM"
+  if [ -n "${CONTACT_WHATSAPP:-}${CONTACT_TELEGRAM:-}" ]; then
+    WA="${CONTACT_WHATSAPP:-}" TG="${CONTACT_TELEGRAM:-}" python3 -I - "$f" <<'PY'
+import json, os, sys
+p = sys.argv[1]
+d = json.load(open(p, encoding="utf-8"))
+for k, env in (("whatsapp", "WA"), ("telegram", "TG")):
+    if os.environ.get(env):
+        d.setdefault("contacts", {})[k] = os.environ[env]
+open(p, "w", encoding="utf-8").write(json.dumps(d, ensure_ascii=False, indent=2) + "\n")
+PY
+  fi
+  if grep -qE "79990000000|your_telegram" "$f"; then
+    warn "На сайте стоят контакты-заглушки! Клиенты пишут в никуда. Укажите их в админке /admin или задайте CONTACT_WHATSAPP и CONTACT_TELEGRAM"
   fi
 }
 public_ip() { curl -4 -s --max-time 5 https://api.ipify.org || hostname -I | awk '{print $1}'; }
@@ -157,7 +166,7 @@ $v6
         proxy_pass http://127.0.0.1:$API_PORT;
     }
     location ~ /\. { deny all; }
-    location ~* \.(js|css|html)$ { add_header Cache-Control "no-cache" always; add_header X-Content-Type-Options nosniff always; }
+    location ~* \.(js|css|html|json|yml)$ { add_header Cache-Control "no-cache" always; add_header X-Content-Type-Options nosniff always; }
     location / { try_files \$uri \$uri/ =404; }
 }
 EOF
@@ -215,6 +224,8 @@ case "$MODE" in
     ;;
   install)
     [ -d "$SITE_SRC" ] || die "Не найдена папка site рядом со скриптом"
+    command -v python3 >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null
+    python3 -I "$HERE/validate_content.py" "$SITE_SRC" || die "content.json с ошибками (см. выше) — сайт НЕ обновлён, работает прежняя версия. Исправьте в админке /admin"
     report
     PORTS_BEFORE="$(listening)"; VPN_BEFORE="$(vpn_snapshot)"
     SITE_PORT="$(pick_port)"

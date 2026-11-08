@@ -13,13 +13,21 @@ cd pet-tags && python3 -m http.server 8000   # http://localhost:8000
 ```
 Сборка не нужна: HTML/CSS/JS, Three.js подключается с CDN.
 
-## Настройки — `js/config.js`
-- название, контакты WhatsApp/Telegram — **замените заглушки**;
-- сроки изготовления, доставка, оплата — ⚠️ проверьте тексты, их видят клиенты;
-- все цены, палитры, лимиты; материалы, узоры (`patterns`), фигурки на адреснике (`toppers`),
+## Управление сайтом — админка `/admin` (Sveltia CMS)
+Цены и названия всех позиций, контакты, сроки, доставку, оплату, обещания, отзывы, FAQ и реквизиты
+мастер правит в **monavita.ru/admin**. Данные хранятся в `content.json`.
+- **Вход:** «Sign In Using Access Token» → fine-grained токен GitHub с доступом только к `Egorov456/CODEX`,
+  права **Contents: Read and write** (ссылка на создание токена есть в окне входа). Токен действует до года, потом его выпускают заново.
+- **Сохранение** = коммит в `main` → сайт обновляется сам примерно за 5 минут. История и откат любой правки — в git.
+- **Защита:** перед выкладкой `deploy/validate_content.py` проверяет файл (цены 0–100 000, названия не пустые, все позиции на месте).
+  Если файл битый, установка останавливается, и сайт остаётся на прошлой версии (журнал: `journalctl -t pettags`).
+- Добавить новую форму, материал или бусину можно только в коде, потому что у них есть 3D-модель: сначала id в `js/config.js`, затем цена в `content.json`.
+- CMS закреплена на версии 0.249.1 с проверкой хеша (SRI). Обновлять её нужно осознанно: поменять версию и `integrity` в `admin/index.html`.
+
+## Технические настройки — `js/config.js`
+- id позиций, палитры, лимиты, 3D-параметры; материалы, узоры (`patterns`), фигурки на адреснике (`toppers`),
   бусины и подвески (`beads`, `group: 'charm'`), ошейник-бусы (`cords`); готовые идеи (`presets`); вопросы-ответы (`faq`);
-- `promises` (обещания под первым экраном), `reviews` (реальные отзывы — пока пусто, блок скрыт), `seller` (реквизиты в подвале);
-- `metrikaId` — номер счётчика Яндекс.Метрики (цели: `open_constructor`, `lead_submit`,
+- номер счётчика Яндекс.Метрики задаётся в админке (цели: `open_constructor`, `lead_submit`,
   `order_submit`, `advice_click`, `messenger_click` — создайте их в Метрике как «JavaScript-событие»);
 - `orderEndpoint` — адрес приёма заявок (см. ниже).
 
@@ -38,6 +46,7 @@ cd pet-tags && python3 -m http.server 8000   # http://localhost:8000
 CONTACT_WHATSAPP=79991234567 CONTACT_TELEGRAM=nick \
 TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... bash install.sh install
 ```
+Контакты лучше указывать в админке. `CONTACT_*` на сервере перекрывают их при каждой выкладке.
 Если на сайте остались заглушки (`79990000000`, `your_telegram`), установщик предупредит.
 
 ### Заявки в EspoCRM (необязательно)
@@ -52,7 +61,7 @@ TELEGRAM_BOT_TOKEN=... TELEGRAM_CHAT_ID=... bash install.sh install
    (Новая → Связались → Макет согласован → Оплачено → В работе → Отправлено → Получено / Отказ).
 5. `ESPO_URL=http://127.0.0.1:8090 ESPO_PUBLIC_URL=https://crm.monavita.ru ESPO_API_KEY=... bash install.sh install`
 
-Тесты приёма заявок: `python3 -m unittest deploy/test_order_server.py`. CRM поддерживается только в VPS-варианте (`deploy/order_server.py`), а не в `api/order.js` для Vercel.
+Тесты: `python3 -m unittest discover -s deploy -p 'test_*.py'` (приём заявок и проверка контента) и `node --test deploy/test_config.mjs`. CRM поддерживается только в VPS-варианте (`deploy/order_server.py`), а не в `api/order.js` для Vercel.
 
 ## Структура
 - `js/landing.js` — главная; `js/app.js` — конструктор; `js/scene.js` — 3D-сцена (витрина, превью, конструктор);
