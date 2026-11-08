@@ -53,7 +53,7 @@ nginx_apply() {  # применить конфиг nginx мягко: reload, е�
   fi
 }
 ENV_FILE=/etc/pettags.env
-ENV_KEYS="TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID CONTACT_WHATSAPP CONTACT_TELEGRAM ESPO_URL ESPO_PUBLIC_URL ESPO_API_KEY"
+ENV_KEYS="TELEGRAM_BOT_TOKEN TELEGRAM_CHAT_ID CONTACT_WHATSAPP CONTACT_TELEGRAM ESPO_URL ESPO_PUBLIC_URL ESPO_API_KEY CMS_USER CMS_PASSWORD_HASH CMS_GITHUB_TOKEN"
 load_env() {  # значения из окружения важнее сохранённых в /etc/pettags.env
   local k; declare -A given=()
   for k in $ENV_KEYS; do [ -n "${!k:-}" ] && given[$k]="${!k}"; done
@@ -62,8 +62,26 @@ load_env() {  # значения из окружения важнее сохра
 }
 save_env() {
   local k; umask 077; : > "$ENV_FILE"
-  for k in $ENV_KEYS; do [ -n "${!k:-}" ] && printf '%s=%s\n' "$k" "${!k}" >> "$ENV_FILE"; done
+  for k in $ENV_KEYS; do  # в одинарных кавычках: bash не раскрывает $ в хеше, systemd кавычки снимает
+    [ -n "${!k:-}" ] || continue
+    [[ "${!k}" == *"'"* ]] && die "$k: значение не должно содержать апостроф"
+    printf "%s='%s'\n" "$k" "${!k}" >> "$ENV_FILE"
+  done
   umask 022
+}
+prepare_cms() {  # вход в админку по логину и паролю: пароль превращаем в хеш, сам пароль не сохраняем
+  if [ -n "${CMS_PASSWORD:-}" ]; then
+    [ "${#CMS_PASSWORD}" -ge 8 ] || die "CMS_PASSWORD: не короче 8 символов"
+    command -v python3 >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null
+    CMS_PASSWORD_HASH="$(CMS_PASSWORD="$CMS_PASSWORD" python3 -I "$HERE/order_server.py" hash)"; export CMS_PASSWORD_HASH
+    unset CMS_PASSWORD
+  fi
+  if [ -n "${CMS_GITHUB_TOKEN:-}" ] && [[ ! "$CMS_GITHUB_TOKEN" =~ ^(github_pat_|ghp_)[A-Za-z0-9_]+$ ]]; then
+    die "CMS_GITHUB_TOKEN: нужен токен GitHub вида github_pat_…"
+  fi
+  if [ -n "${CMS_USER:-}${CMS_PASSWORD_HASH:-}${CMS_GITHUB_TOKEN:-}" ] && { [ -z "${CMS_USER:-}" ] || [ -z "${CMS_PASSWORD_HASH:-}" ] || [ -z "${CMS_GITHUB_TOKEN:-}" ]; }; then
+    warn "Вход в админку по паролю не включён: нужны все три — CMS_USER, CMS_PASSWORD и CMS_GITHUB_TOKEN"
+  fi
 }
 apply_contacts() {  # подставить реальные контакты мастера в content.json сайта (перекрывают значения из админки)
   local f="$WEB/content.json"
@@ -165,6 +183,13 @@ $v6
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_pass http://127.0.0.1:$API_PORT;
     }
+    location /api/cms/ {
+        limit_except GET POST { deny all; }
+        client_max_body_size 8k;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_pass http://127.0.0.1:$API_PORT;
+    }
     location ~ /\. { deny all; }
     location ~* \.(js|css|html|json|yml)$ { add_header Cache-Control "no-cache" always; add_header X-Content-Type-Options nosniff always; }
     location / { try_files \$uri \$uri/ =404; }
@@ -176,8 +201,10 @@ setup_bot() {
   local tg=0 crm=0
   [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && [ -n "${TELEGRAM_CHAT_ID:-}" ] && tg=1
   [ -n "${ESPO_URL:-}" ] && [ -n "${ESPO_API_KEY:-}" ] && crm=1
+  [ -n "${CMS_USER:-}" ] && [ -n "${CMS_PASSWORD_HASH:-}" ] && [ -n "${CMS_GITHUB_TOKEN:-}" ] && crm="${crm}c"
   [ "$tg$crm" != 00 ] || { warn "Ни Telegram-бот, ни CRM не заданы — заявки клиенты будут отправлять через мессенджеры сами"; return 0; }
-  [ "$tg" = 1 ] || warn "Telegram-бот не задан — заявки будут только в CRM, без уведомлений"
+  [ "$tg" = 1 ] || warn "Telegram-бот не задан — заявки без уведомлений в Telegram"
+  case "$crm" in *c) ok "Вход в админку /admin по логину и паролю включён (логин: $CMS_USER)"; crm="${crm%c}";; esac
   has_systemd || { warn "Нет systemd — приём заявок не установлен"; return 0; }
   command -v python3 >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 >/dev/null
   port_busy "$API_PORT" && ! systemctl is-active --quiet pettags-orders && die "Порт $API_PORT занят — приём заявок не установлен"
@@ -234,7 +261,7 @@ case "$MODE" in
     [ -d "$WEB" ] && cp -a "$WEB" "$WEB.bak-$(date +%s)"
     ls -1dt "$WEB".bak-* 2>/dev/null | tail -n +4 | while read -r old; do rm -rf -- "$old"; done
     install -d "$WEB"; cp -a "$SITE_SRC/." "$WEB/"; rm -rf "$WEB/api" "$WEB/deploy"
-    load_env; apply_contacts; save_env
+    load_env; prepare_cms; apply_contacts; save_env
     chown -R root:root "$WEB"; find "$WEB" -type d -exec chmod 755 {} +; find "$WEB" -type f -exec chmod 644 {} +
     [ -f "$NGX_CONF" ] && cp "$NGX_CONF" "$NGX_CONF.bak"
     write_nginx_conf "$SITE_PORT"

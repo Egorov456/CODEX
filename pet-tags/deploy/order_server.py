@@ -6,14 +6,18 @@
   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID — уведомления мастеру в Telegram;
   ESPO_URL, ESPO_API_KEY — заявка заводится лидом в EspoCRM (необязательно);
   ESPO_PUBLIC_URL — адрес CRM для ссылки в Telegram (по умолчанию ESPO_URL);
+  CMS_USER, CMS_PASSWORD_HASH, CMS_GITHUB_TOKEN — вход в админку /admin по логину и паролю (необязательно);
   для тестов — TELEGRAM_API, PORT.
 Если CRM недоступна, заявка всё равно уходит в Telegram — ничего не теряется.
 """
 import base64
+import hashlib
+import hmac
 import json
 import os
 import re
 import time
+import urllib.parse
 import urllib.request
 import uuid
 from collections import defaultdict, deque
@@ -31,6 +35,52 @@ MAX_TEXT = 3800
 RATE = (8, 600)  # не больше 8 запросов с одного IP за 10 минут
 PNG = re.compile(r"^data:image/png;base64,([A-Za-z0-9+/=]+)$")
 hits = defaultdict(deque)
+CMS_USER = os.environ.get("CMS_USER", "")
+CMS_HASH = os.environ.get("CMS_PASSWORD_HASH", "")
+CMS_TOKEN = os.environ.get("CMS_GITHUB_TOKEN", "")
+CMS_FAILS = (5, 900)  # не больше 5 неверных паролей с одного IP за 15 минут
+fails = defaultdict(deque)
+
+
+def hash_password(password, salt=None, iterations=310_000):
+    """pbkdf2_sha256$итерации$соль$хеш — в /etc/pettags.env хранится только это, не пароль."""
+    salt = salt or uuid.uuid4().hex
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), iterations)
+    return f"pbkdf2_sha256${iterations}${salt}${base64.b64encode(dk).decode()}"
+
+
+def check_password(password, stored):
+    try:
+        algo, it, salt, _ = stored.split("$", 3)
+        return algo == "pbkdf2_sha256" and hmac.compare_digest(hash_password(password, salt, int(it)), stored)
+    except Exception:
+        return False
+
+
+LOGIN_PAGE = """<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Вход в админку</title><style>
+body{{font:16px system-ui,sans-serif;background:#1d1f24;color:#eee;display:grid;place-items:center;min-height:100vh;margin:0}}
+form{{background:#2a2d34;padding:28px;border-radius:16px;width:min(320px,86vw);display:grid;gap:12px}}
+h1{{font-size:20px;margin:0 0 4px}}input,button{{font:inherit;padding:12px;border-radius:10px;border:1px solid #444;background:#1d1f24;color:#eee}}
+button{{background:#ff5a1f;border:0;color:#fff;font-weight:600}}.err{{color:#ff8a80;margin:0}}</style></head><body>
+<form method="post"><h1>Mona Vita · админка</h1>{error}
+<input name="user" placeholder="Логин" autocomplete="username" required autofocus>
+<input name="password" type="password" placeholder="Пароль" autocomplete="current-password" required>
+<input type="hidden" name="provider" value="{provider}"><button>Войти</button></form></body></html>"""
+
+# Тот же обмен сообщениями, что у OAuth-прокси Sveltia/Decap: токен уходит только окну нашего же сайта.
+TOKEN_PAGE = """<!doctype html><html><body><script>
+(() => {{
+  const host = {host};
+  window.addEventListener('message', ({{ data, origin }}) => {{
+    if (data !== 'authorizing:github') return;
+    try {{ if (new URL(origin).hostname !== host) return; }} catch {{ return; }}
+    window.opener?.postMessage('authorization:github:success:' + JSON.stringify({{ provider: 'github', token: {token} }}), origin);
+  }});
+  window.opener?.postMessage('authorizing:github', '*');
+}})();
+</script><p>Вход выполнен, окно можно закрыть.</p></body></html>"""
 
 
 def tg(method, data=None, files=None):
@@ -125,10 +175,49 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def page(self, code, body):
+        data = body.encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.end_headers()
+        self.wfile.write(data)
+
+    def cms_on(self):
+        return self.path.split("?")[0].rstrip("/").endswith("/cms/auth") and CMS_USER and CMS_HASH and CMS_TOKEN
+
     def do_GET(self):
+        if self.cms_on():
+            return self.page(200, LOGIN_PAGE.format(error="", provider="github"))
         self.reply(405, {"error": "method"})
 
+    def cms_login(self):
+        ip = self.headers.get("X-Real-IP") or self.client_address[0]
+        q, now = fails[ip], time.time()
+        while q and now - q[0] > CMS_FAILS[1]:
+            q.popleft()
+        if len(q) >= CMS_FAILS[0]:
+            return self.page(429, LOGIN_PAGE.format(error='<p class="err">Слишком много попыток. Подождите 15 минут.</p>', provider="github"))
+        size = int(self.headers.get("Content-Length") or 0)
+        form = urllib.parse.parse_qs(self.rfile.read(min(max(size, 0), 4096)).decode(errors="replace"))
+        user = (form.get("user") or [""])[0].strip()
+        password = (form.get("password") or [""])[0]
+        ok_user = hmac.compare_digest(user.lower().encode(), CMS_USER.lower().encode())
+        if not (check_password(password, CMS_HASH) and ok_user):
+            q.append(now)
+            self.log_message("cms: неверный вход, логин %r", user[:40])
+            return self.page(401, LOGIN_PAGE.format(error='<p class="err">Неверный логин или пароль</p>', provider="github"))
+        q.clear()
+        host = (self.headers.get("X-Forwarded-Host") or self.headers.get("Host") or "").split(":")[0]
+        self.log_message("cms: вход %r", user[:40])
+        return self.page(200, TOKEN_PAGE.format(host=json.dumps(host), token=json.dumps(CMS_TOKEN)))
+
     def do_POST(self):
+        if self.cms_on():
+            return self.cms_login()
         tg_on, crm_on = bool(TOKEN and CHAT), bool(ESPO and ESPO_KEY)
         if not tg_on and not crm_on:
             return self.reply(500, {"error": "not configured"})
@@ -172,4 +261,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    import sys
+    if sys.argv[1:2] == ["hash"]:  # python3 order_server.py hash  (пароль читается из CMS_PASSWORD)
+        print(hash_password(os.environ["CMS_PASSWORD"]))
+        sys.exit(0)
     ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()

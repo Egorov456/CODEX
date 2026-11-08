@@ -4,6 +4,8 @@ backend:
   name: github
   repo: Egorov456/CODEX
   branch: main
+  base_url: https://monavita.ru
+  auth_endpoint: api/cms/auth
   commit_messages:
     update: 'Админка: {{slug}} обновлён'
 locale: ru
