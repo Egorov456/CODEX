@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { buildShape } from './shapes.js';
-import { calcPrice, countChars, defaultState, describe, newOrderId, orderText, presetState } from './pricing.js';
+import { calcPrice, cordPalette, countChars, defaultState, describe, nearest, newOrderId, normalizeState, orderText, presetState, variantOf, variantsOf } from './pricing.js';
+import { variantCss } from './beads.js';
 import { copy, goal, initAnalytics, postToMaster, tgLink, waLink } from './send.js';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -24,7 +25,7 @@ const STORE = 'pettag-v1';
 let st = defaultState();
 try {
   const saved = JSON.parse(localStorage.getItem(STORE) || 'null');
-  if (saved) st = { ...st, ...saved, front: { ...st.front, ...saved.front }, back: { ...st.back, ...saved.back } };
+  if (saved) st = normalizeState({ ...st, ...saved, front: { ...st.front, ...saved.front }, back: { ...st.back, ...saved.back } });
 } catch { /* приватный режим — работаем без сохранения */ }
 
 // Готовая идея с главной: #preset-<id> в адресе или отметка в localStorage
@@ -205,7 +206,17 @@ function buildPanel() {
 
   // 5. Шнурок
   const cord = () => byId(CONFIG.cords, st.cord);
-  const cordColor = field('Цвет шнурка', swatches(CONFIG.cordColors, () => st.cordColor, (c) => set((x) => (x.cordColor = c))));
+  // паракорд и ошейник — 20 цветов поставщика (без своего цвета), вощёный шнур — своя палитра
+  const cordName = h('em');
+  const putCord = (c) => set((x) => (x.cordColor = c));
+  const cordSw = { wax: swatches(CONFIG.cordColors, () => st.cordColor, putCord), para: swatches(CONFIG.paracordColors, () => st.cordColor, putCord, { custom: false }) };
+  const cordColor = field('Цвет шнурка', h('div', {}, cordSw.wax, cordSw.para), cordName);
+  refreshers.push(() => {
+    const para = ['paracord', 'collar'].includes(st.cord);
+    cordSw.wax.hidden = para;
+    cordSw.para.hidden = !para;
+    cordName.textContent = para ? cordPalette(st.cord).find((c) => c.id === st.cordColor)?.name || '' : '';
+  });
   const chainColor = field('Цвет цепочки', chips(CONFIG.chainColors, () => st.chainColor, (c) => set((x) => (x.chainColor = c.id)), (c) => [c.name]));
   const neckInp = h('input', { class: 'input', inputmode: 'decimal', maxlength: 5, placeholder: 'Например, 24', value: st.neck || '',
     oninput: (e) => set((x) => (x.neck = e.target.value.replace(/[^\d.,]/g, ''))) });
@@ -225,21 +236,57 @@ function buildPanel() {
       x.extras = x.extras.filter((id) => (CONFIG.extras.find((e) => e.id === id)?.only || p.id) === p.id);
     }, p.id === 'cat' ? 'Для кошки' : 'Для собаки'), (p) => [p.name])),
     petNote,
-    field('Крепление', chips(CONFIG.cords, () => st.cord, (c) => set((x) => (x.cord = c.id), c.name),
+    field('Крепление', chips(CONFIG.cords, () => st.cord, (c) => set((x) => {
+      x.cord = c.id;
+      // у паракорда своя палитра: подбираем ближайший цвет поставщика
+      const pal = cordPalette(c.id);
+      if (!pal.some((p) => p.id === x.cordColor)) x.cordColor = nearest(pal, x.cordColor).id;
+    }, c.name),
       (c) => [c.name, h('small', {}, c.price ? money(c.price) : 'включено')])),
     cordColor, chainColor, neckBox, neckNote));
 
-  // 6. Бусины
-  const pick = { type: 'round', color: CONFIG.beadColors[0] };
+  // 6. Бусины: форма → вариант по фото поставщика; буквы и подвески — цвет из палитры
+  const firstBead = CONFIG.beads.find((b) => variantsOf(b.id)) || CONFIG.beads[0];
+  const pick = { type: firstBead.id, v: variantsOf(firstBead.id)?.[0].id, color: variantsOf(firstBead.id)?.[0].color || CONFIG.beadColors[0] };
   const pickRef = () => pick;
   // у каждой детали свой цвет по умолчанию; количество сбрасывается, чтобы «× 4» не перенеслось на другую деталь
-  const pickType = (b) => { pick.type = b.id; if (b.color) pick.color = b.color; count.n = 1; refresh(); };
+  const pickType = (b) => {
+    pick.type = b.id;
+    const vs = variantsOf(b.id);
+    if (vs) {
+      const v = vs.find((x) => x.id === pick.v) || nearest(vs, pick.color);
+      pick.v = v.id;
+      pick.color = v.color;
+    } else {
+      pick.v = undefined;
+      if (b.color) pick.color = b.color;
+    }
+    count.n = 1;
+    refresh();
+  };
   const typeChips = chips(CONFIG.beads.filter((b) => b.group !== 'charm'), () => pick.type, pickType, (b) => [b.name, h('small', {}, money(b.price))]);
   const charmChips = chips(CONFIG.beads.filter((b) => b.group === 'charm'), () => pick.type, pickType, (b) => [b.name, h('small', {}, money(b.price))]);
   const count = { n: 1 };
   const countChips = chips([1, 2, 4, 6].map((n) => ({ id: n, name: `× ${n}` })), () => count.n, (c) => { count.n = c.id; refresh(); }, (c) => [c.name]);
   const isLetter = () => !!byId(CONFIG.beads, pick.type).letter;
   const colorChips = swatches(CONFIG.beadColors, () => pick.color, (c) => { pick.color = c; refresh(); });
+  // свотчи вариантов текущей формы: показывают отделку (прозрачность, мрамор, пятна)
+  const variantBox = h('div', { class: 'swatches variants' });
+  const variantName = h('em');
+  let variantFor = null;
+  refreshers.push(() => {
+    const vs = variantsOf(pick.type);
+    colorChips.hidden = !!vs;
+    variantBox.hidden = !vs;
+    variantName.textContent = vs ? variantOf(pick).name : '';
+    if (!vs) return;
+    if (variantFor !== pick.type) {
+      variantFor = pick.type;
+      variantBox.replaceChildren(...vs.map((v) => h('button', { type: 'button', class: 'sw', 'data-v': v.id, style: `background:${variantCss(v)}`, title: v.name, 'aria-label': v.name,
+        onclick: () => { pick.v = v.id; pick.color = v.color; refresh(); } })));
+    }
+    variantBox.querySelectorAll('[data-v]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === pick.v)));
+  });
   const letterInp = h('input', { class: 'input', maxlength: CONFIG.limits.beads, placeholder: 'Слово из букв-бусин, напр. БУБЛИК' });
   const letterBox = field('Буквы', letterInp);
   const full = () => st.beads.length >= CONFIG.limits.beads;
@@ -255,8 +302,9 @@ function buildPanel() {
       letterInp.value = '';
     } else {
       const n = Math.min(count.n, CONFIG.limits.beads - st.beads.length);
-      set((x) => x.beads.push(...Array.from({ length: n }, () => ({ id: uid(), type: t.id, color: pick.color }))),
-        `${t.group === 'charm' ? 'Подвеска' : 'Бусина'} «${t.name}»${n > 1 ? ` × ${n}` : ''}`);
+      const v = variantOf(pick);
+      set((x) => x.beads.push(...Array.from({ length: n }, () => ({ id: uid(), type: t.id, color: pick.color, ...(v ? { v: v.id } : {}) }))),
+        `${t.group === 'charm' ? 'Подвеска' : 'Бусина'} «${t.name}${v ? ` · ${v.name}` : ''}»${n > 1 ? ` × ${n}` : ''}`);
     }
   } }, '+ Добавить');
   const list = h('div', { class: 'bead-list' });
@@ -273,14 +321,17 @@ function buildPanel() {
     letterBox.hidden = !isLetter();
     countBox.hidden = isLetter();
     clearBtn.hidden = !st.beads.length;
-    list.replaceChildren(...st.beads.map((b, i) => h('span', { class: 'bead-item' },
-      h('i', { style: `background:${b.color};color:${b.letter ? '#0008' : 'transparent'}` }, b.letter || '•'),
-      `${i + 1}. ${byId(CONFIG.beads, b.type).name}`,
-      h('button', { type: 'button', 'aria-label': 'Убрать', onclick: () => set((x) => (x.beads = x.beads.filter((y) => y.id !== b.id)), 'Бусина убрана') }, '×'))));
+    list.replaceChildren(...st.beads.map((b, i) => {
+      const v = variantOf(b);
+      return h('span', { class: 'bead-item' },
+      h('i', { style: `background:${v ? variantCss(v) : b.color};color:${b.letter ? '#0008' : 'transparent'}` }, b.letter || '•'),
+      `${i + 1}. ${byId(CONFIG.beads, b.type).name}${v ? ` · ${v.name}` : ''}`,
+      h('button', { type: 'button', 'aria-label': 'Убрать', onclick: () => set((x) => (x.beads = x.beads.filter((y) => y.id !== b.id)), 'Бусина убрана') }, '×'));
+    }));
   });
   const countBox = field('Сколько добавить', countChips);
   P.append(step(6, 'Бусины и подвески', () => (st.beads.length ? `${st.beads.length} шт.` : 'нет'),
-    noCord, field('Бусины', typeChips), field('Подвески-фигурки', charmChips), field('Цвет', colorChips), letterBox, countBox,
+    noCord, field('Бусины', typeChips), field('Подвески-фигурки', charmChips), field('Цвет', h('div', {}, variantBox, colorChips), variantName), letterBox, countBox,
     h('div', { class: 'row' }, addBtn, clearBtn), list, field('Расположение', layout)));
 
   // 7. Стразы и дополнительно

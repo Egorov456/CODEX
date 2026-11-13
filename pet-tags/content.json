@@ -253,48 +253,43 @@
     ],
     "beads": [
       {
-        "id": "round",
-        "name": "Круглая",
+        "id": "pony",
+        "name": "Pony глянцевая",
         "price": 40
       },
       {
-        "id": "facet",
-        "name": "Гранёная",
-        "price": 60
-      },
-      {
-        "id": "pearl",
-        "name": "Жемчуг",
-        "price": 70
-      },
-      {
-        "id": "metal",
-        "name": "Металлик",
+        "id": "pony-clear",
+        "name": "Pony прозрачная гранёная",
         "price": 50
       },
       {
-        "id": "heart",
-        "name": "Сердечко",
-        "price": 80
-      },
-      {
-        "id": "star",
-        "name": "Звёздочка",
-        "price": 80
-      },
-      {
-        "id": "silicone",
-        "name": "Силиконовая матовая",
-        "price": 50
-      },
-      {
-        "id": "daisy",
-        "name": "Цветочек",
+        "id": "pony-fx",
+        "name": "Pony с эффектом",
         "price": 70
       },
       {
-        "id": "tennis",
-        "name": "Мячик",
+        "id": "marble",
+        "name": "Перламутровая мраморная",
+        "price": 70
+      },
+      {
+        "id": "spotted",
+        "name": "Пятнистая",
+        "price": 80
+      },
+      {
+        "id": "flower",
+        "name": "Цветок",
+        "price": 70
+      },
+      {
+        "id": "heart-frame",
+        "name": "Сердце-рамка",
+        "price": 80
+      },
+      {
+        "id": "heart-puffy",
+        "name": "Сердце пастель",
         "price": 80
       },
       {

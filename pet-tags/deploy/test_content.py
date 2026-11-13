@@ -25,7 +25,7 @@ class ContentTest(unittest.TestCase):
         self.assertEqual(v.main(SITE), 0)
 
     def test_ids_parsed_from_config(self):
-        self.assertEqual(len(self.ids["beads"]), 17)
+        self.assertEqual(len(self.ids["beads"]), 16)
         self.assertIn("circle", self.ids["shapes"])
 
     def test_lost_id_rejected(self):
