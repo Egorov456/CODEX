@@ -1,6 +1,7 @@
 import { CONFIG } from './config.js';
 import { buildShape } from './shapes.js';
-import { calcPrice, defaultState, presetState } from './pricing.js';
+import { calcPrice, defaultState, normalizeBead, presetState, variantOf } from './pricing.js';
+import { variantCss } from './beads.js';
 import { copy, goal, initAnalytics, newId, postToMaster, tgLink, waLink } from './send.js';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -127,16 +128,18 @@ function fillIdeas() {
 
 // ---------- Детали: бусины и подвески ----------
 const PARTS = [
-  ['ch-strawberry'], ['ch-croissant'], ['ch-teddy'], ['ch-kitty'], ['ch-bow'], ['ch-duck'],
-  ['tennis', '#cde34a'], ['daisy', '#ffd23f'], ['disc', '#ffffff', 'А'], ['letter', '#f8c8dc', 'Б'], ['facet', '#48dbfb'], ['pearl', '#f8c8dc'],
-].map(([type, color, letter]) => {
+  ['pony', 'fuchsia'], ['pony-clear', 'aqua'], ['pony-fx', 'stars'], ['marble', 'turquoise'], ['spotted', 'leopard'], ['flower', 'pink'],
+  ['heart-frame', 'red'], ['heart-puffy', 'mint'], ['disc', null, 'А'], ['ch-strawberry'], ['ch-teddy'], ['ch-duck'],
+].map(([type, v, letter]) => {
   const t = CONFIG.beads.find((b) => b.id === type);
-  return { id: 'part-' + type, type, color: color || t.color || '#ff4f81', letter, name: t.name, price: t.price, charm: t.group === 'charm' };
+  const b = normalizeBead({ type, v, color: t.color || '#ff4f81', letter });
+  const vr = variantOf(b);
+  return { id: 'part-' + type, ...b, name: t.name + (vr ? ' · ' + vr.name : ''), price: t.price, charm: t.group === 'charm', css: vr ? variantCss(vr) : b.color };
 });
 
 function fillParts() {
   $('#partsGrid').innerHTML = PARTS.map((p) => '<a class="part" href="constructor.html" data-goal="open_constructor">' +
-    '<div class="part-img" data-part="' + esc(p.id) + '"><span class="dot" style="background:' + esc(p.color) + '"></span></div>' +
+    '<div class="part-img" data-part="' + esc(p.id) + '"><span class="dot" style="background:' + esc(p.css) + '"></span></div>' +
     '<b>' + esc(p.name) + '</b><span>' + (p.charm ? 'подвеска' : 'бусина') + ' · ' + money(p.price) + '</span></a>').join('');
 }
 

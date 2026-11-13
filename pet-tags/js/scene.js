@@ -3,8 +3,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { CONFIG } from './config.js';
-import { buildShape, smallHeart, smallStar } from './shapes.js';
+import { buildShape } from './shapes.js';
 import { buildExtraBead, buildTopper, isCharm, patternMaps } from './charms.js';
+import { buildCatalogBead, isCatalogBead } from './beads.js';
 
 const byId = (list, id) => list.find((x) => x.id === id) || list[0];
 const DEPTH = 0.18, BEVEL = 0.06;
@@ -330,7 +331,7 @@ export class TagScene {
 
     // парный браслет для хозяина: тот же шнур и бусины, рядом с адресником
     const braceletOn = st.extras.includes('bracelet');
-    const brSig = [braceletOn, st.cord, st.cordColor, sc, st.beads.filter((b) => !isCharm(b.type)).map((b) => b.type + b.color + (b.letter || '')).join(',')].join('|');
+    const brSig = [braceletOn, st.cord, st.cordColor, sc, st.beads.filter((b) => !isCharm(b.type)).map((b) => b.type + (b.v || '') + b.color + (b.letter || '')).join(',')].join('|');
     this.swap('bracelet', brSig, () => (braceletOn ? this.buildBracelet(st, sc) : null), this.root);
 
     const outline = def.shape.getPoints(60);
@@ -470,7 +471,7 @@ export class TagScene {
     g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 120, 0.09, 12, true), new THREE.MeshPhysicalMaterial({ color, roughness: 0.85, sheen: 0.5 })));
     // бусины по нижней дуге — те же, что на шнурке
     let beads = st.beads.filter((b) => !isCharm(b.type)).slice(0, 9);
-    if (!beads.length) beads = [{ type: 'pearl', color: '#ffffff' }, { type: 'pearl', color: '#ffffff' }, { type: 'pearl', color: '#ffffff' }];
+    if (!beads.length) beads = [0, 1, 2].map(() => ({ type: 'marble', v: 'pearl', color: '#f4f1ee' }));
     beads.forEach((b, i) => {
       const a = -Math.PI / 2 + (i - (beads.length - 1) / 2) * 0.36;
       const o = this.buildBead(b);
@@ -519,16 +520,31 @@ export class TagScene {
     const geo = new THREE.TubeGeometry(this.curve, 360, cord.radius, 14, true);
     const matOpts = { color: st.cordColor, roughness: cord.id === 'wax' ? 0.45 : 0.85, sheen: 0.5 };
     if (cord.id === 'paracord' || cord.id === 'collar') {
+      // плетёная оплётка паракорда: «ёлочка» из косых прядей + рельеф
       const cv = document.createElement('canvas');
       cv.width = 64; cv.height = 64;
       const ctx = cv.getContext('2d');
       ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 64, 64);
-      ctx.strokeStyle = 'rgba(0,0,0,0.28)'; ctx.lineWidth = 9;
-      for (let i = -64; i < 128; i += 22) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i + 64, 64); ctx.stroke(); }
+      for (const dir of [1, -1]) {
+        for (let i = -64; i < 128; i += 16) {
+          ctx.save();
+          ctx.beginPath(); ctx.rect(dir > 0 ? 0 : 32, 0, 32, 64); ctx.clip();
+          const g = ctx.createLinearGradient(i, 0, i + 10, 0);
+          g.addColorStop(0, 'rgba(0,0,0,0.32)'); g.addColorStop(0.5, 'rgba(0,0,0,0.05)'); g.addColorStop(1, 'rgba(0,0,0,0.32)');
+          ctx.strokeStyle = g; ctx.lineWidth = 7;
+          ctx.beginPath(); ctx.moveTo(i, dir > 0 ? 0 : 64); ctx.lineTo(i + 64, dir > 0 ? 64 : 0); ctx.stroke();
+          ctx.restore();
+        }
+      }
       const tex = new THREE.CanvasTexture(cv);
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
       tex.colorSpace = THREE.SRGBColorSpace;
-      tex.repeat.set(Math.round(this.curve.getLength() / 0.14), 2);
+      tex.repeat.set(Math.round(this.curve.getLength() / 0.16), 2);
+      const bump = tex.clone();
+      bump.colorSpace = THREE.NoColorSpace;
+      bump.needsUpdate = true;
+      matOpts.bumpMap = bump;
+      matOpts.bumpScale = 1.2;
       matOpts.map = tex;
     }
     const tube = new THREE.Mesh(geo, new THREE.MeshPhysicalMaterial(matOpts));
@@ -565,7 +581,8 @@ export class TagScene {
       u = ((u % 1) + 1) % 1;
       const p = this.curve.getPointAt(u);
       const t = this.curve.getTangentAt(u);
-      const rot = this.isCollar && !isCharm(b.type) ? Math.atan2(t.y, t.x) : 0;
+      // бусины из каталога надеты на шнурок каналом — поворачиваем по касательной; буквы на подвесном шнурке остаются читаемыми
+      const rot = (this.isCollar && !isCharm(b.type)) || isCatalogBead(b.type) ? Math.atan2(t.y, t.x) : 0;
       return { p, rot: Math.abs(rot) > Math.PI / 2 ? rot - Math.sign(rot) * Math.PI : rot };
     });
   }
@@ -577,7 +594,7 @@ export class TagScene {
     st.beads.forEach((b, i) => {
       if (!slots[i]) return;
       keep.add(b.id);
-      const sig = [b.type, b.color, b.letter, !!this.isCollar].join('|');
+      const sig = [b.type, b.v, b.color, b.letter, !!this.isCollar].join('|');
       const cur = this.beads.get(b.id);
       const { p: slot, rot } = slots[i];
       if (cur && cur.sig === sig) {
@@ -607,35 +624,13 @@ export class TagScene {
   }
 
   buildBead(b) {
+    const cat = buildCatalogBead(b);
+    if (cat) return cat;
     const extra = buildExtraBead(b);
     if (extra) return extra;
     const c = b.color;
     const glossy = () => new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.05 });
     switch (b.type) {
-      case 'facet':
-        return new THREE.Mesh(
-          new THREE.IcosahedronGeometry(0.21, 1),
-          new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.02, transmission: 0.75, thickness: 0.35, ior: 1.6, flatShading: true, envMapIntensity: 1.6 })
-        );
-      case 'silicone': {
-        const g = new THREE.SphereGeometry(0.2, 32, 24);
-        g.scale(1, 1, 0.82);
-        return new THREE.Mesh(g, new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.78, sheen: 0.6, sheenColor: '#ffffff' }));
-      }
-      case 'pearl':
-        return new THREE.Mesh(
-          new THREE.SphereGeometry(0.19, 32, 24),
-          new THREE.MeshPhysicalMaterial({ color: c, roughness: 0.28, sheen: 1, sheenColor: '#ffffff', iridescence: 0.7, clearcoat: 0.6 })
-        );
-      case 'metal':
-        return new THREE.Mesh(new THREE.SphereGeometry(0.16, 32, 24), metal(c, 0.15));
-      case 'heart':
-      case 'star': {
-        const sh = b.type === 'heart' ? smallHeart(0.24) : smallStar(0.27);
-        const g = new THREE.ExtrudeGeometry(sh, { depth: 0.1, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 3 });
-        g.center();
-        return new THREE.Mesh(g, glossy());
-      }
       case 'letter': {
         const cv = document.createElement('canvas');
         cv.width = cv.height = 128;

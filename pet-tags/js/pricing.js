@@ -3,6 +3,47 @@ import { CONFIG } from './config.js';
 const byId = (list, id) => list.find((x) => x.id === id) || list[0];
 export const countChars = (s) => (s || '').replace(/\s/g, '').length;
 
+// ---------- Варианты бусин и палитры шнурков ----------
+// Вариант: { id, name, color, finish, accent }
+export function variantsOf(type) {
+  const list = CONFIG.beadVariants?.[type];
+  return list ? list.map(([id, name, color, finish, accent]) => ({ id, name, color, finish, accent })) : null;
+}
+export const variantOf = (b) => { const vs = variantsOf(b.type); return vs ? vs.find((v) => v.id === b.v) || vs[0] : null; };
+
+const rgb = (hex) => { const n = parseInt(String(hex || '').replace('#', ''), 16) || 0; return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const dist = (a, b) => { const [x, y] = [rgb(a), rgb(b)]; return (x[0] - y[0]) ** 2 + (x[1] - y[1]) ** 2 + (x[2] - y[2]) ** 2; };
+export const nearest = (list, hex, colorOf = (x) => x.color) => list.reduce((best, x) => (dist(colorOf(x), hex) < dist(colorOf(best), hex) ? x : best), list[0]);
+
+// Паракорд и ошейник-бусы (тоже паракорд) — только цвета поставщика; вощёный шнур — своя палитра
+export const cordPalette = (cord) => (cord === 'paracord' || cord === 'collar' ? CONFIG.paracordColors : CONFIG.cordColors.map((c) => ({ id: c, color: c })));
+
+// Бусины из старого ассортимента → ближайшая новая форма (для сохранённых макетов)
+const LEGACY = { round: 'pony', silicone: 'pony', tennis: 'pony', facet: 'pony-clear', metal: 'pony-fx', pearl: 'marble', heart: 'heart-puffy', star: 'flower', daisy: 'flower' };
+
+export function normalizeBead(b) {
+  const out = { ...b };
+  if (!CONFIG.beads.some((t) => t.id === out.type)) out.type = LEGACY[out.type] || 'pony';
+  const vs = variantsOf(out.type);
+  if (vs) {
+    const v = vs.find((x) => x.id === out.v) || nearest(vs, out.color || vs[0].color);
+    out.v = v.id;
+    out.color = v.color;
+  } else {
+    delete out.v;
+    out.color = out.color || byId(CONFIG.beads, out.type).color || '#ffffff';
+  }
+  return out;
+}
+
+// Приводит сохранённое/готовое состояние к текущему ассортименту
+export function normalizeState(st) {
+  const pal = cordPalette(st.cord);
+  if (['paracord', 'collar'].includes(st.cord) && !pal.some((c) => c.id === st.cordColor)) st.cordColor = nearest(pal, st.cordColor || pal[0].color).id;
+  st.beads = (st.beads || []).map(normalizeBead);
+  return st;
+}
+
 export function defaultState() {
   return {
     shape: 'bone',
@@ -33,13 +74,13 @@ export function defaultState() {
 export function presetState(p) {
   const d = defaultState();
   const s = p.state || {};
-  return {
+  return normalizeState({
     ...d, ...s,
     front: { ...d.front, ...(s.front || {}) },
     back: { ...d.back, ...(s.back || {}) },
     beads: (s.beads || []).map((b, i) => ({ id: `${p.id}-${i}`, ...b })),
     extras: [...(s.extras || [])],
-  };
+  });
 }
 
 export function calcPrice(st) {
@@ -104,14 +145,20 @@ export function describe(st) {
   lines.push(`Спереди: «${st.front.line1}»${st.front.line2 ? ` / «${st.front.line2}»` : ''} — шрифт ${font.name}, цвет ${tc.name}${icon.id !== 'none' ? `, значок ${icon.name}` : ''}`);
   if (st.back.line1 || st.back.line2) lines.push(`Сзади: «${st.back.line1}»${st.back.line2 ? ` / «${st.back.line2}»` : ''}`);
   let c = `Шнурок: ${cord.name}`;
-  if (['wax', 'paracord', 'collar'].includes(cord.id)) c += `, цвет ${colorName(st.cordColor)}`;
+  if (['wax', 'paracord', 'collar'].includes(cord.id)) {
+    const named = cordPalette(cord.id).find((x) => x.id === st.cordColor && x.name);
+    c += `, цвет ${named ? `«${named.name}» ` : ''}${colorName(st.cordColor)}`;
+  }
   if (cord.id === 'chain') c += `, ${byId(CONFIG.chainColors, st.chainColor).name}`;
   if (cord.id === 'collar') c += `, обхват шеи: ${st.neck ? `${st.neck} см` : 'не указан — уточнить!'}`;
   lines.push(c);
   if (st.beads.length) {
     lines.push(
       'Бусины (по порядку от колечка): ' +
-        st.beads.map((b, i) => `${i + 1}) ${byId(CONFIG.beads, b.type).name}${b.letter ? ` «${b.letter}»` : ''} ${colorName(b.color)}`).join('; ')
+        st.beads.map((b, i) => {
+          const v = variantOf(b);
+          return `${i + 1}) ${byId(CONFIG.beads, b.type).name}${v ? ` — ${v.name}` : ''}${b.letter ? ` «${b.letter}»` : ''}${v ? '' : ` ${colorName(b.color)}`}`;
+        }).join('; ')
     );
   }
   if (st.strass) lines.push(`Стразы: ${st.strass} шт., ${byId(CONFIG.strassColors, st.strassColor).name}`);

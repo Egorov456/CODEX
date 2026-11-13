@@ -167,46 +167,11 @@ function letterDisc(color, letter) {
   return g;
 }
 
-function daisy(color) {
-  const s = new THREE.Shape();
-  for (let i = 0; i <= 160; i++) {
-    const t = (i / 160) * Math.PI * 2;
-    const r = 0.17 * (0.72 + 0.28 * Math.abs(Math.cos(2.5 * t)));
-    i ? s.lineTo(Math.cos(t) * r, Math.sin(t) * r) : s.moveTo(Math.cos(t) * r, Math.sin(t) * r);
-  }
-  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.025, bevelSegments: 3 });
-  geo.center();
-  const g = new THREE.Group();
-  g.add(new THREE.Mesh(geo, mat(color, { clearcoat: 1, roughness: 0.3 })));
-  g.add(sphere(0.06, mat('#ffffff', { roughness: 0.4 }), 0, 0, 0.07, 1, 1, 0.6));
-  return g;
-}
-
-function tennis(color) {
-  const tex = canvasTex(256, 128, (c, w, h) => {
-    c.fillStyle = color;
-    c.fillRect(0, 0, w, h);
-    c.strokeStyle = '#ffffff';
-    c.lineWidth = 9;
-    for (const off of [0, Math.PI]) {
-      c.beginPath();
-      for (let x = 0; x <= w; x += 4) {
-        const y = h / 2 + Math.sin((x / w) * Math.PI * 4 + off) * h * 0.28;
-        x ? c.lineTo(x, y) : c.moveTo(x, y);
-      }
-      c.stroke();
-    }
-  });
-  return new THREE.Mesh(new THREE.SphereGeometry(0.19, 32, 24), mat('#ffffff', { map: tex, roughness: 0.85, clearcoat: 0, sheen: 1, sheenColor: '#f4ffd0' }));
-}
-
 // Бусины и подвески, которых нет в базовом наборе сцены
 export function buildExtraBead(b) {
   const c = b.color;
   switch (b.type) {
     case 'disc': return letterDisc(c, b.letter);
-    case 'daisy': return daisy(c);
-    case 'tennis': return tennis(c);
     case 'ch-strawberry': return hang(strawberry(c));
     case 'ch-croissant': return hang(croissant());
     case 'ch-teddy': { const h = teddyHead(c); h.scale.setScalar(0.95); return hang(h); }
